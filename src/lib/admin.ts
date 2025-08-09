@@ -19,102 +19,49 @@ export interface UpdateCadetData {
   avatar_url?: string;
 }
 
+// Функция для получения токена авторизации
+const getAuthToken = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Пользователь не авторизован');
+  }
+  return session.access_token;
+};
+
+// Функция для вызова Edge Function
+const callEdgeFunction = async (functionName: string, payload: any, method: string = 'POST') => {
+  const token = await getAuthToken();
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+  }
+
+  return data;
+};
+
 // Создание нового кадета с учетной записью
 export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
   try {
-    console.log('Creating cadet with auth', { email: cadetData.email, name: cadetData.name });
-
-    // 1. Создаем пользователя в Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: cadetData.email,
-      password: cadetData.password,
-      email_confirm: true,
-      user_metadata: {
-        name: cadetData.name,
-        role: 'cadet'
-      }
-    });
-
-    if (authError) {
-      console.error('Auth creation failed', authError);
-      throw new Error(`Ошибка создания учетной записи: ${authError.message}`);
-    }
-
-    if (!authData.user) {
-      throw new Error('Не удалось создать пользователя');
-    }
-
-    console.log('Auth user created', { id: authData.user.id });
-
-    try {
-      // 2. Создаем запись в таблице users
-      const { error: userError } = await supabase
-        .from('users')
-        .insert([{
-          id: authData.user.id,
-          email: cadetData.email,
-          name: cadetData.name,
-          role: 'cadet'
-        }]);
-
-      if (userError) {
-        console.error('User table insert failed', userError);
-        // Не критично, если запись уже существует или создается триггером
-      }
-
-      // 3. Создаем запись кадета в таблице cadets
-      const { data: cadetRecord, error: cadetError } = await supabase
-        .from('cadets')
-        .insert([{
-          auth_user_id: authData.user.id,
-          name: cadetData.name,
-          email: cadetData.email,
-          phone: cadetData.phone || null,
-          platoon: cadetData.platoon,
-          squad: cadetData.squad,
-          avatar_url: cadetData.avatar_url || null,
-          rank: 0,
-          total_score: 0
-        }])
-        .select()
-        .single();
-
-      if (cadetError) {
-        console.error('Cadet creation failed', cadetError);
-        
-        // Если создание кадета не удалось, удаляем созданного пользователя
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        
-        throw new Error(`Ошибка создания профиля кадета: ${cadetError.message}`);
-      }
-
-      // 4. Создаем начальные баллы для кадета
-      const { error: scoresError } = await supabase
-        .from('scores')
-        .insert([{
-          cadet_id: cadetRecord.id,
-          study_score: 0,
-          discipline_score: 0,
-          events_score: 0
-        }]);
-
-      if (scoresError) {
-        console.error('Initial scores creation failed', scoresError);
-        // Не критично, можно продолжить
-      }
-
-      console.log('Cadet created successfully', { cadetId: cadetRecord.id });
-      return cadetRecord;
-
-    } catch (error) {
-      // Если что-то пошло не так после создания Auth пользователя, удаляем его
-      console.error('Cleaning up auth user due to error', error);
-      await supabase.auth.admin.deleteUser(authData.user.id);
-      throw error;
-    }
-
+    console.log('Creating cadet via Edge Function', { email: cadetData.email, name: cadetData.name });
+    
+    const result = await callEdgeFunction('create-cadet', cadetData);
+    
+    console.log('Cadet created successfully via Edge Function');
+    return result.cadet;
   } catch (error) {
-    console.error('Create cadet with auth failed', error);
+    console.error('Create cadet via Edge Function failed', error);
     throw error;
   }
 };
@@ -122,41 +69,15 @@ export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
 // Обновление данных кадета
 export const updateCadetData = async (cadetId: string, updates: UpdateCadetData) => {
   try {
-    console.log('Updating cadet', { cadetId, updates });
-
-    const { data, error } = await supabase
-      .from('cadets')
-      .update(updates)
-      .eq('id', cadetId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Cadet update failed', error);
-      throw new Error(`Ошибка обновления кадета: ${error.message}`);
-    }
-
-    // Если обновляется email или имя, обновляем также в таблице users
-    if (updates.email || updates.name) {
-      const { error: userUpdateError } = await supabase
-        .from('users')
-        .update({
-          ...(updates.email && { email: updates.email }),
-          ...(updates.name && { name: updates.name })
-        })
-        .eq('id', data.auth_user_id);
-
-      if (userUpdateError) {
-        console.error('User table update failed', userUpdateError);
-        // Не критично, продолжаем
-      }
-    }
-
-    console.log('Cadet updated successfully', { cadetId });
-    return data;
+    console.log('Updating cadet via Edge Function', { cadetId, updates });
+    
+    const result = await callEdgeFunction('update-cadet', { cadetId, updates }, 'PUT');
+    
+    console.log('Cadet updated successfully via Edge Function');
+    return result.cadet;
 
   } catch (error) {
-    console.error('Update cadet failed', error);
+    console.error('Update cadet via Edge Function failed', error);
     throw error;
   }
 };
@@ -164,43 +85,15 @@ export const updateCadetData = async (cadetId: string, updates: UpdateCadetData)
 // Удаление кадета (с учетной записью)
 export const deleteCadet = async (cadetId: string) => {
   try {
-    console.log('Deleting cadet', { cadetId });
-
-    // Получаем auth_user_id перед удалением
-    const { data: cadet, error: fetchError } = await supabase
-      .from('cadets')
-      .select('auth_user_id')
-      .eq('id', cadetId)
-      .single();
-
-    if (fetchError) {
-      throw new Error(`Ошибка получения данных кадета: ${fetchError.message}`);
-    }
-
-    // Удаляем кадета (каскадное удаление удалит связанные записи)
-    const { error: deleteError } = await supabase
-      .from('cadets')
-      .delete()
-      .eq('id', cadetId);
-
-    if (deleteError) {
-      throw new Error(`Ошибка удаления кадета: ${deleteError.message}`);
-    }
-
-    // Удаляем пользователя из Auth (если есть auth_user_id)
-    if (cadet.auth_user_id) {
-      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(cadet.auth_user_id);
-      
-      if (authDeleteError) {
-        console.error('Auth user deletion failed', authDeleteError);
-        // Не критично, кадет уже удален
-      }
-    }
-
-    console.log('Cadet deleted successfully', { cadetId });
+    console.log('Deleting cadet via Edge Function', { cadetId });
+    
+    const result = await callEdgeFunction('delete-cadet', { cadetId }, 'DELETE');
+    
+    console.log('Cadet deleted successfully via Edge Function');
+    return result;
 
   } catch (error) {
-    console.error('Delete cadet failed', error);
+    console.error('Delete cadet via Edge Function failed', error);
     throw error;
   }
 };
