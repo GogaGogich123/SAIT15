@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield } from 'lucide-react';
+import { Shield, Star, Trophy, Medal, Crown, Award, Target, Zap, Heart, BookOpen, Users, Flame, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/useToast';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
@@ -36,6 +36,26 @@ import {
 } from '../lib/supabase';
 import { createCadetWithAuth, updateCadetData, deleteCadet } from '../lib/admin';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
+
+// Helper function to get icon component by name
+const getIconComponent = (iconName: string) => {
+  const icons: { [key: string]: any } = {
+    Star,
+    Trophy,
+    Medal,
+    Crown,
+    Award,
+    Target,
+    Zap,
+    Heart,
+    BookOpen,
+    Users,
+    Flame,
+    Sparkles
+  };
+  return icons[iconName] || Star;
+};
+
 interface AchievementForm {
   title: string;
   description: string;
@@ -619,7 +639,7 @@ const AdminPage: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {achievements.map((achievement, index) => {
-                      const IconComponent = Star; // Simplified for now
+                      const IconComponent = getIconComponent(achievement.icon);
                       
                       return (
                         <motion.div
