@@ -133,285 +133,69 @@ export const getCadetById = async (id: string): Promise<Cadet> => {
     return cached;
   }
   
-  try {
-    const { data, error } = await supabase
-      .from('cadets')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      // Возвращаем моковые данные
-      const mockCadets = getMockCadets();
-      const mockCadet = mockCadets.find(c => c.id === id);
-      if (!mockCadet) throw new Error('Cadet not found');
-      return mockCadet;
-    }
-    
-    // Кэшируем результат
-    cache.set(cacheKey, data, CACHE_DURATION.LONG);
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching cadet:', error);
-    const mockCadets = getMockCadets();
-    const mockCadet = mockCadets.find(c => c.id === id);
-    if (!mockCadet) throw new Error('Cadet not found');
-    return mockCadet;
-  }
+  const { data, error } = await supabase
+    .from('cadets')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error) throw error;
+  
+  // Кэшируем результат
+  cache.set(cacheKey, data, CACHE_DURATION.LONG);
+  
+  return data;
 };
 
 export const getCadetScores = async (cadetId: string): Promise<Score | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('scores')
-      .select('*')
-      .eq('cadet_id', cadetId)
-      .maybeSingle();
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error('Supabase error:', error);
-      return getMockScore(cadetId);
-    }
-    
-    return data || getMockScore(cadetId);
-  } catch (error) {
-    console.error('Error fetching scores:', error);
-    return getMockScore(cadetId);
-  }
-};
-
-const getMockScore = (cadetId: string): Score | null => {
-  const mockScores: { [key: string]: Score } = {
-    '00000000-0000-0000-0000-000000000001': {
-      id: '00000000-0000-0000-0000-000000000011',
-      cadet_id: '00000000-0000-0000-0000-000000000001',
-      study_score: 95,
-      discipline_score: 88,
-      events_score: 92,
-      category: 'study',
-      points: 0,
-      description: '',
-      created_at: '2024-01-01'
-    },
-    '00000000-0000-0000-0000-000000000002': {
-      id: '00000000-0000-0000-0000-000000000012',
-      cadet_id: '00000000-0000-0000-0000-000000000002',
-      study_score: 92,
-      discipline_score: 86,
-      events_score: 90,
-      category: 'study',
-      points: 0,
-      description: '',
-      created_at: '2024-01-01'
-    },
-    '00000000-0000-0000-0000-000000000003': {
-      id: '00000000-0000-0000-0000-000000000013',
-      cadet_id: '00000000-0000-0000-0000-000000000003',
-      study_score: 88,
-      discipline_score: 84,
-      events_score: 83,
-      category: 'study',
-      points: 0,
-      description: '',
-      created_at: '2024-01-01'
-    },
-    '00000000-0000-0000-0000-000000000004': {
-      id: '00000000-0000-0000-0000-000000000014',
-      cadet_id: '00000000-0000-0000-0000-000000000004',
-      study_score: 85,
-      discipline_score: 82,
-      events_score: 75,
-      category: 'study',
-      points: 0,
-      description: '',
-      created_at: '2024-01-01'
-    },
-    '00000000-0000-0000-0000-000000000005': {
-      id: '00000000-0000-0000-0000-000000000015',
-      cadet_id: '00000000-0000-0000-0000-000000000005',
-      study_score: 82,
-      discipline_score: 78,
-      events_score: 78,
-      category: 'study',
-      points: 0,
-      description: '',
-      created_at: '2024-01-01'
-    }
-  };
+  const { data, error } = await supabase
+    .from('scores')
+    .select('*')
+    .eq('cadet_id', cadetId)
+    .maybeSingle();
   
-  return mockScores[cadetId] || null;
+  if (error && error.code !== 'PGRST116') throw error;
+  
+  return data;
 };
 
 export const getCadetAchievements = async (cadetId: string): Promise<CadetAchievement[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('cadet_achievements')
-      .select(`
-        *,
-        achievement:achievements(*),
-        auto_achievement:auto_achievements(*)
-      `)
-      .eq('cadet_id', cadetId);
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      return getMockCadetAchievements(cadetId);
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching cadet achievements:', error);
-    return getMockCadetAchievements(cadetId);
-  }
-};
-
-const getMockCadetAchievements = (cadetId: string): CadetAchievement[] => {
-  if (cadetId === '00000000-0000-0000-0000-000000000001') {
-    return [
-      {
-        id: '00000000-0000-0000-0000-000000000021',
-        cadet_id: '00000000-0000-0000-0000-000000000001',
-        auto_achievement_id: '00000000-0000-0000-0000-000000000031',
-        awarded_date: '2024-01-15',
-        auto_achievement: {
-          id: '00000000-0000-0000-0000-000000000031',
-          title: 'Первые шаги',
-          description: 'Набрать 50 баллов',
-          icon: 'Zap',
-          color: 'from-green-500 to-green-700',
-          requirement_type: 'total_score',
-          requirement_value: 50
-        }
-      }
-    ];
-  }
-  return [];
+  const { data, error } = await supabase
+    .from('cadet_achievements')
+    .select(`
+      *,
+      achievement:achievements(*),
+      auto_achievement:auto_achievements(*)
+    `)
+    .eq('cadet_id', cadetId);
+  
+  if (error) throw error;
+  
+  return data || [];
 };
 
 export const getAutoAchievements = async (): Promise<AutoAchievement[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('auto_achievements')
-      .select('*')
-      .order('requirement_value', { ascending: true });
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      return getMockAutoAchievements();
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching auto achievements:', error);
-    return getMockAutoAchievements();
-  }
-};
-
-const getMockAutoAchievements = (): AutoAchievement[] => {
-  return [
-    {
-      id: '00000000-0000-0000-0000-000000000031',
-      title: 'Первые шаги',
-      description: 'Набрать 50 баллов',
-      icon: 'Zap',
-      color: 'from-green-500 to-green-700',
-      requirement_type: 'total_score',
-      requirement_value: 50
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000032',
-      title: 'На пути к успеху',
-      description: 'Набрать 100 баллов',
-      icon: 'Target',
-      color: 'from-blue-500 to-blue-700',
-      requirement_type: 'total_score',
-      requirement_value: 100
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000033',
-      title: 'Отличник',
-      description: 'Набрать 200 баллов',
-      icon: 'Trophy',
-      color: 'from-yellow-500 to-yellow-700',
-      requirement_type: 'total_score',
-      requirement_value: 200
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000034',
-      title: 'Мастер учёбы',
-      description: 'Набрать 80 баллов по учёбе',
-      icon: 'BookOpen',
-      color: 'from-blue-500 to-blue-700',
-      requirement_type: 'category_score',
-      requirement_category: 'study',
-      requirement_value: 80
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000035',
-      title: 'Дисциплинированный',
-      description: 'Набрать 80 баллов по дисциплине',
-      icon: 'Shield',
-      color: 'from-red-500 to-red-700',
-      requirement_type: 'category_score',
-      requirement_category: 'discipline',
-      requirement_value: 80
-    }
-  ];
+  const { data, error } = await supabase
+    .from('auto_achievements')
+    .select('*')
+    .order('requirement_value', { ascending: true });
+  
+  if (error) throw error;
+  
+  return data || [];
 };
 
 export const getScoreHistory = async (cadetId: string): Promise<ScoreHistory[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('score_history')
-      .select('*')
-      .eq('cadet_id', cadetId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      return getMockScoreHistory(cadetId);
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching score history:', error);
-    return getMockScoreHistory(cadetId);
-  }
-};
-
-const getMockScoreHistory = (cadetId: string): ScoreHistory[] => {
-  if (cadetId === '00000000-0000-0000-0000-000000000001') {
-    return [
-      {
-        id: '00000000-0000-0000-0000-000000000041',
-        cadet_id: '00000000-0000-0000-0000-000000000001',
-        category: 'study',
-        points: 5,
-        description: 'Отличная работа на уроке истории',
-        created_at: '2024-03-15T10:00:00Z'
-      },
-      {
-        id: '00000000-0000-0000-0000-000000000042',
-        cadet_id: '00000000-0000-0000-0000-000000000001',
-        category: 'discipline',
-        points: 3,
-        description: 'Примерное поведение на построении',
-        created_at: '2024-03-14T08:00:00Z'
-      },
-      {
-        id: '00000000-0000-0000-0000-000000000043',
-        cadet_id: '00000000-0000-0000-0000-000000000001',
-        category: 'events',
-        points: 8,
-        description: 'Активное участие в спортивном мероприятии',
-        created_at: '2024-03-13T16:00:00Z'
-      }
-    ];
-  }
-  return [];
+  const { data, error } = await supabase
+    .from('score_history')
+    .select('*')
+    .eq('cadet_id', cadetId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+  
+  if (error) throw error;
+  
+  return data || [];
 };
 
 export const getNews = async (): Promise<News[]> => {
@@ -420,60 +204,14 @@ export const getNews = async (): Promise<News[]> => {
     return cached;
   }
   
-  try {
-    const { data, error } = await supabase
-      .from('news')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      return getMockNews();
-    }
-    
-    const result = data || [];
-    cache.set(CACHE_KEYS.NEWS, result, CACHE_DURATION.SHORT);
-    
-    return result;
-  } catch (error) {
-    console.error('Error fetching news:', error);
-    return getMockNews();
-  }
-};
-
-const getMockNews = (): News[] => {
-  const result = [
-    {
-      id: '00000000-0000-0000-0000-000000000051',
-      title: 'Победа в региональных соревнованиях',
-      content: 'Кадеты нашего корпуса заняли первое место в региональных военно-спортивных соревнованиях. Команда показала отличную подготовку и слаженную работу.',
-      author: 'Администрация НККК',
-      is_main: true,
-      background_image_url: 'https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?w=1200',
-      images: ['https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?w=800'],
-      created_at: '2024-03-15T12:00:00Z'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000052',
-      title: 'День открытых дверей',
-      content: 'В субботу состоится день открытых дверей для будущих кадетов и их родителей. Приглашаем всех желающих познакомиться с нашим корпусом.',
-      author: 'Приёмная комиссия',
-      is_main: false,
-      background_image_url: 'https://images.pexels.com/photos/1181533/pexels-photo-1181533.jpeg?w=800',
-      images: ['https://images.pexels.com/photos/1181533/pexels-photo-1181533.jpeg?w=600'],
-      created_at: '2024-03-14T10:00:00Z'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000053',
-      title: 'Новые достижения кадетов',
-      content: 'Поздравляем кадетов 10-го взвода с успешным завершением учебного модуля по истории казачества.',
-      author: 'Преподавательский состав',
-      is_main: false,
-      background_image_url: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg?w=800',
-      images: [],
-      created_at: '2024-03-13T14:00:00Z'
-    }
-  ];
+  const { data, error } = await supabase
+    .from('news')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  
+  const result = data || [];
   cache.set(CACHE_KEYS.NEWS, result, CACHE_DURATION.SHORT);
   
   return result;
@@ -485,89 +223,29 @@ export const getTasks = async (): Promise<Task[]> => {
     return cached;
   }
   
-  try {
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('status', 'active')
-      .order('deadline', { ascending: true });
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      return getMockTasks();
-    }
-    
-    const result = data || [];
-    cache.set(CACHE_KEYS.TASKS, result, CACHE_DURATION.MEDIUM);
-    
-    return result;
-  } catch (error) {
-    console.error('Error fetching tasks:', error);
-    return getMockTasks();
-  }
-};
-
-const getMockTasks = (): Task[] => {
-  const result = [
-    {
-      id: '00000000-0000-0000-0000-000000000061',
-      title: 'Подготовить доклад по истории казачества',
-      description: 'Подготовить и представить доклад на тему "История кубанского казачества" объёмом не менее 5 страниц.',
-      category: 'study' as const,
-      difficulty: 'medium' as const,
-      points: 15,
-      deadline: '2024-12-31T23:59:59Z',
-      status: 'active',
-      created_at: '2024-03-01T10:00:00Z'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000062',
-      title: 'Участие в утренней зарядке',
-      description: 'Принять участие в утренней зарядке в течение недели без пропусков.',
-      category: 'discipline' as const,
-      difficulty: 'easy' as const,
-      points: 10,
-      deadline: '2024-12-25T23:59:59Z',
-      status: 'active',
-      created_at: '2024-03-01T10:00:00Z'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000063',
-      title: 'Организация мероприятия для младших кадетов',
-      description: 'Организовать и провести познавательное мероприятие для кадетов младших курсов.',
-      category: 'events' as const,
-      difficulty: 'hard' as const,
-      points: 25,
-      deadline: '2024-12-30T23:59:59Z',
-      status: 'active',
-      created_at: '2024-03-01T10:00:00Z'
-    }
-  ];
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('status', 'active')
+    .order('deadline', { ascending: true });
+  
+  if (error) throw error;
+  
+  const result = data || [];
   cache.set(CACHE_KEYS.TASKS, result, CACHE_DURATION.MEDIUM);
   
   return result;
 };
 
 export const getTaskSubmissions = async (cadetId: string): Promise<TaskSubmission[]> => {
-  try {
-    console.log('Fetching task submissions for cadet:', cadetId);
-    const { data, error } = await supabase
-      .from('task_submissions')
-      .select('*')
-      .eq('cadet_id', cadetId);
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      // Возвращаем пустой массив при ошибке, чтобы не блокировать отображение заданий
-      return [];
-    }
-    
-    console.log('Task submissions data:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching task submissions:', error);
-    return [];
-  }
+  const { data, error } = await supabase
+    .from('task_submissions')
+    .select('*')
+    .eq('cadet_id', cadetId);
+  
+  if (error) throw error;
+  
+  return data || [];
 };
 
 export const takeTask = async (taskId: string, cadetId: string): Promise<void> => {
@@ -676,48 +354,14 @@ export const deleteNews = async (id: string): Promise<void> => {
 
 // Achievements functions
 export const getAchievements = async (): Promise<Achievement[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('achievements')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      return getMockAchievements();
-    }
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching achievements:', error);
-    return getMockAchievements();
-  }
-};
-
-const getMockAchievements = (): Achievement[] => {
-  return [
-    {
-      id: '00000000-0000-0000-0000-000000000071',
-      title: 'Отличник учёбы',
-      description: 'За выдающиеся успехи в учебной деятельности',
-      icon: 'Star',
-      color: 'from-blue-500 to-blue-700'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000072',
-      title: 'Лидер взвода',
-      description: 'За проявленные лидерские качества',
-      icon: 'Crown',
-      color: 'from-yellow-500 to-yellow-700'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000073',
-      title: 'Активист корпуса',
-      description: 'За активное участие в мероприятиях',
-      icon: 'Users',
-      color: 'from-green-500 to-green-700'
-    }
-  ];
+  const { data, error } = await supabase
+    .from('achievements')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  
+  return data || [];
 };
 
 export const addAchievement = async (achievementData: Omit<Achievement, 'id' | 'created_at'>): Promise<Achievement> => {
@@ -809,27 +453,6 @@ export const updateCadetScores = async (cadetId: string, category: 'study' | 'di
       .eq('cadet_id', cadetId);
     
     if (error) throw error;
-  try {
-    const { data, error } = await supabase
-      .from('cadets')
-      .select('*')
-      .order('rank', { ascending: true });
-    
-    if (error) {
-      console.error('Supabase error:', error);
-      // Возвращаем моковые данные при ошибке
-      return getMockCadets();
-    }
-    
-    const result = data || [];
-    // Кэшируем результат
-    cache.set(CACHE_KEYS.CADETS, result, CACHE_DURATION.MEDIUM);
-    
-    return result;
-  } catch (error) {
-    console.error('Error fetching cadets:', error);
-    return getMockCadets();
-  }
   } else {
     // Создаем новые баллы
     const { error } = await supabase
@@ -851,101 +474,26 @@ export const updateCadetScores = async (cadetId: string, category: 'study' | 'di
   if (updateCadetError) throw updateCadetError;
 };
 
-// Mock data functions for fallback
-const getMockCadets = (): Cadet[] => {
-  const result = [
-    {
-      id: '00000000-0000-0000-0000-000000000001',
-      name: 'Петров Алексей Владимирович',
-      platoon: '10-1',
-      squad: 1,
-      rank: 1,
-      total_score: 275,
-      avatar_url: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200',
-      join_date: '2023-09-01'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000002',
-      name: 'Сидоров Дмитрий Александрович',
-      platoon: '10-1',
-      squad: 1,
-      rank: 2,
-      total_score: 268,
-      avatar_url: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?w=200',
-      join_date: '2023-09-01'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000003',
-      name: 'Козлов Михаил Сергеевич',
-      platoon: '10-2',
-      squad: 2,
-      rank: 3,
-      total_score: 255,
-      avatar_url: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?w=200',
-      join_date: '2023-09-01'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000004',
-      name: 'Волков Андрей Николаевич',
-      platoon: '9-1',
-      squad: 1,
-      rank: 4,
-      total_score: 242,
-      avatar_url: 'https://images.pexels.com/photos/1040881/pexels-photo-1040881.jpeg?w=200',
-      join_date: '2023-09-01'
-    },
-    {
-      id: '00000000-0000-0000-0000-000000000005',
-      name: 'Морозов Владислав Игоревич',
-      platoon: '9-2',
-      squad: 2,
-      rank: 5,
-      total_score: 238,
-      avatar_url: 'https://images.pexels.com/photos/1043473/pexels-photo-1043473.jpeg?w=200',
-      join_date: '2023-09-01'
-    }
-  ];
-  
-  cache.set(CACHE_KEYS.CADETS, result, CACHE_DURATION.MEDIUM);
-  
-  return result;
-};
-
 // Analytics functions
 export const getAnalytics = async () => {
-  try {
-    // Пытаемся получить данные из Supabase
-    const cadets = await getCadets();
-    const tasks = await getTasks();
-    const achievements = await getAchievements();
-    
-    // Возвращаем аналитику на основе полученных данных
-    return {
-      totalCadets: cadets.length,
-      totalTasks: tasks.length,
-      totalAchievements: achievements.length,
-      platoonStats: cadets.map(c => ({ platoon: c.platoon, total_score: c.total_score })),
-      avgScores: [
-        { study_score: 88, discipline_score: 84, events_score: 82 }
-      ],
-      topCadets: cadets.slice(0, 10).map(c => ({
-        name: c.name,
-        total_score: c.total_score,
-        platoon: c.platoon
-      }))
-    };
-  } catch (error) {
-    console.error('Error fetching analytics:', error);
-    // Возвращаем моковые данные при ошибке
-    return {
-      totalCadets: 5,
-      totalTasks: 3,
-      totalAchievements: 3,
-      platoonStats: [],
-      avgScores: [
-        { study_score: 88, discipline_score: 84, events_score: 82 }
-      ],
-      topCadets: []
-    };
-  }
+  // Получаем данные из Supabase
+  const cadets = await getCadets();
+  const tasks = await getTasks();
+  const achievements = await getAchievements();
+  
+  // Возвращаем аналитику на основе полученных данных
+  return {
+    totalCadets: cadets.length,
+    totalTasks: tasks.length,
+    totalAchievements: achievements.length,
+    platoonStats: cadets.map(c => ({ platoon: c.platoon, total_score: c.total_score })),
+    avgScores: [
+      { study_score: 88, discipline_score: 84, events_score: 82 }
+    ],
+    topCadets: cadets.slice(0, 10).map(c => ({
+      name: c.name,
+      total_score: c.total_score,
+      platoon: c.platoon
+    }))
+  };
 };
