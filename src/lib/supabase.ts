@@ -33,6 +33,7 @@ export interface Achievement {
   id: string;
   title: string;
   description: string;
+  category: string;
   icon: string;
   color: string;
 }
@@ -236,6 +237,48 @@ export const abandonTask = async (taskId: string, cadetId: string): Promise<void
     .eq('task_id', taskId)
     .eq('cadet_id', cadetId)
     .eq('status', 'taken');
+  
+  if (error) throw error;
+};
+
+export const getAchievements = async (): Promise<Achievement[]> => {
+  const { data, error } = await supabase
+    .from('achievements')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+};
+
+export const addAchievement = async (achievement: Omit<Achievement, 'id'>): Promise<Achievement> => {
+  const { data, error } = await supabase
+    .from('achievements')
+    .insert(achievement)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateAchievement = async (id: string, updates: Partial<Omit<Achievement, 'id'>>): Promise<Achievement> => {
+  const { data, error } = await supabase
+    .from('achievements')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const deleteAchievement = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('achievements')
+    .delete()
+    .eq('id', id);
   
   if (error) throw error;
 };

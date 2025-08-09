@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { handleSupabaseError, safeLog } from '../utils/errorHandler';
 
 export interface CreateCadetData {
   name: string;
@@ -23,7 +22,7 @@ export interface UpdateCadetData {
 // Создание нового кадета с учетной записью
 export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
   try {
-    safeLog('Creating cadet with auth', { email: cadetData.email, name: cadetData.name });
+    console.log('Creating cadet with auth', { email: cadetData.email, name: cadetData.name });
 
     // 1. Создаем пользователя в Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -37,7 +36,7 @@ export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
     });
 
     if (authError) {
-      safeLog('Auth creation failed', authError);
+      console.error('Auth creation failed', authError);
       throw new Error(`Ошибка создания учетной записи: ${authError.message}`);
     }
 
@@ -45,7 +44,7 @@ export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
       throw new Error('Не удалось создать пользователя');
     }
 
-    safeLog('Auth user created', { id: authData.user.id });
+    console.log('Auth user created', { id: authData.user.id });
 
     try {
       // 2. Создаем запись в таблице users
@@ -59,7 +58,7 @@ export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
         }]);
 
       if (userError) {
-        safeLog('User table insert failed', userError);
+        console.error('User table insert failed', userError);
         // Не критично, если запись уже существует или создается триггером
       }
 
@@ -81,7 +80,7 @@ export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
         .single();
 
       if (cadetError) {
-        safeLog('Cadet creation failed', cadetError);
+        console.error('Cadet creation failed', cadetError);
         
         // Если создание кадета не удалось, удаляем созданного пользователя
         await supabase.auth.admin.deleteUser(authData.user.id);
@@ -100,22 +99,22 @@ export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
         }]);
 
       if (scoresError) {
-        safeLog('Initial scores creation failed', scoresError);
+        console.error('Initial scores creation failed', scoresError);
         // Не критично, можно продолжить
       }
 
-      safeLog('Cadet created successfully', { cadetId: cadetRecord.id });
+      console.log('Cadet created successfully', { cadetId: cadetRecord.id });
       return cadetRecord;
 
     } catch (error) {
       // Если что-то пошло не так после создания Auth пользователя, удаляем его
-      safeLog('Cleaning up auth user due to error', error);
+      console.error('Cleaning up auth user due to error', error);
       await supabase.auth.admin.deleteUser(authData.user.id);
       throw error;
     }
 
   } catch (error) {
-    safeLog('Create cadet with auth failed', error);
+    console.error('Create cadet with auth failed', error);
     throw error;
   }
 };
@@ -123,7 +122,7 @@ export const createCadetWithAuth = async (cadetData: CreateCadetData) => {
 // Обновление данных кадета
 export const updateCadetData = async (cadetId: string, updates: UpdateCadetData) => {
   try {
-    safeLog('Updating cadet', { cadetId, updates });
+    console.log('Updating cadet', { cadetId, updates });
 
     const { data, error } = await supabase
       .from('cadets')
@@ -133,7 +132,7 @@ export const updateCadetData = async (cadetId: string, updates: UpdateCadetData)
       .single();
 
     if (error) {
-      safeLog('Cadet update failed', error);
+      console.error('Cadet update failed', error);
       throw new Error(`Ошибка обновления кадета: ${error.message}`);
     }
 
@@ -148,16 +147,16 @@ export const updateCadetData = async (cadetId: string, updates: UpdateCadetData)
         .eq('id', data.auth_user_id);
 
       if (userUpdateError) {
-        safeLog('User table update failed', userUpdateError);
+        console.error('User table update failed', userUpdateError);
         // Не критично, продолжаем
       }
     }
 
-    safeLog('Cadet updated successfully', { cadetId });
+    console.log('Cadet updated successfully', { cadetId });
     return data;
 
   } catch (error) {
-    safeLog('Update cadet failed', error);
+    console.error('Update cadet failed', error);
     throw error;
   }
 };
@@ -165,7 +164,7 @@ export const updateCadetData = async (cadetId: string, updates: UpdateCadetData)
 // Удаление кадета (с учетной записью)
 export const deleteCadet = async (cadetId: string) => {
   try {
-    safeLog('Deleting cadet', { cadetId });
+    console.log('Deleting cadet', { cadetId });
 
     // Получаем auth_user_id перед удалением
     const { data: cadet, error: fetchError } = await supabase
@@ -193,15 +192,15 @@ export const deleteCadet = async (cadetId: string) => {
       const { error: authDeleteError } = await supabase.auth.admin.deleteUser(cadet.auth_user_id);
       
       if (authDeleteError) {
-        safeLog('Auth user deletion failed', authDeleteError);
+        console.error('Auth user deletion failed', authDeleteError);
         // Не критично, кадет уже удален
       }
     }
 
-    safeLog('Cadet deleted successfully', { cadetId });
+    console.log('Cadet deleted successfully', { cadetId });
 
   } catch (error) {
-    safeLog('Delete cadet failed', error);
+    console.error('Delete cadet failed', error);
     throw error;
   }
 };
@@ -243,7 +242,7 @@ export const getCadetsStats = async () => {
     return stats;
 
   } catch (error) {
-    safeLog('Get cadets stats failed', error);
+    console.error('Get cadets stats failed', error);
     throw error;
   }
 };
