@@ -131,7 +131,7 @@ const AdminPage: React.FC = () => {
     description: ''
   });
   
-  const [newsForm] = useState<NewsForm>({
+  const [newsForm, setNewsForm] = useState<NewsForm>({
     title: '',
     content: '',
     author: '',
