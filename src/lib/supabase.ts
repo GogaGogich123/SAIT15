@@ -283,6 +283,72 @@ export const deleteAchievement = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
+// Additional admin functions that were missing
+export const awardAchievement = async (cadetId: string, achievementId: string, awardedBy: string): Promise<void> => {
+  const { error } = await supabase
+    .from('cadet_achievements')
+    .insert({
+      cadet_id: cadetId,
+      achievement_id: achievementId,
+      awarded_by: awardedBy
+    });
+  
+  if (error) throw error;
+};
+
+export const updateCadetScores = async (cadetId: string, category: 'study' | 'discipline' | 'events', points: number): Promise<void> => {
+  // First, get current scores
+  const { data: currentScores, error: fetchError } = await supabase
+    .from('scores')
+    .select('*')
+    .eq('cadet_id', cadetId)
+    .single();
+
+  if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+  const updates = {
+    [`${category}_score`]: (currentScores?.[`${category}_score`] || 0) + points
+  };
+
+  if (currentScores) {
+    // Update existing record
+    const { error } = await supabase
+      .from('scores')
+      .update(updates)
+      .eq('cadet_id', cadetId);
+    
+    if (error) throw error;
+  } else {
+    // Create new record
+    const { error } = await supabase
+      .from('scores')
+      .insert({
+        cadet_id: cadetId,
+        study_score: category === 'study' ? points : 0,
+        discipline_score: category === 'discipline' ? points : 0,
+        events_score: category === 'events' ? points : 0
+      });
+    
+    if (error) throw error;
+  }
+};
+
+export const getAnalytics = async () => {
+  const [cadetsData, scoresData, achievementsData] = await Promise.all([
+    supabase.from('cadets').select('*'),
+    supabase.from('scores').select('*'),
+    supabase.from('achievements').select('*')
+  ]);
+
+  return {
+    totalCadets: cadetsData.data?.length || 0,
+    totalAchievements: achievementsData.data?.length || 0,
+    averageScore: scoresData.data?.reduce((acc, score) => 
+      acc + (score.study_score + score.discipline_score + score.events_score), 0
+    ) / (scoresData.data?.length || 1) || 0
+  };
+};
+
 // Admin functions
 export const addCadetByAdmin = async (cadetData: {
   name: string;
