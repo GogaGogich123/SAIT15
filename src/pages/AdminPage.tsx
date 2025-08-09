@@ -676,6 +676,63 @@ const AdminPage: React.FC = () => {
                 </motion.div>
               )}
 
+              {/* Scores Tab */}
+              {activeTab === 'scores' && (
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="space-y-8"
+                >
+                  <motion.div variants={staggerItem} className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white">Управление баллами</h2>
+                    <button
+                      onClick={() => setShowScoreModal(true)}
+                      className="btn-primary flex items-center space-x-2"
+                    >
+                      <span>Начислить баллы</span>
+                    </button>
+                  </motion.div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {cadets.map((cadet, index) => (
+                      <motion.div
+                        key={cadet.id}
+                        variants={staggerItem}
+                        whileHover={{ scale: 1.02, y: -5 }}
+                        className="card-hover p-6"
+                      >
+                        <div className="flex items-center space-x-4 mb-4">
+                          <img
+                            src={cadet.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
+                            alt={cadet.name}
+                            className="w-16 h-16 rounded-full object-cover border-2 border-blue-400"
+                          />
+                          <div>
+                            <h3 className="text-xl font-bold text-white">{cadet.name}</h3>
+                            <p className="text-blue-300">{cadet.platoon} взвод, {cadet.squad} отделение</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-4">
+                          <span className="text-blue-200">Общий балл:</span>
+                          <span className="text-2xl font-bold text-yellow-400">{cadet.total_score}</span>
+                        </div>
+                        
+                        <button
+                          onClick={() => {
+                            setScoreForm({ ...scoreForm, cadetId: cadet.id });
+                            setShowScoreModal(true);
+                          }}
+                          className="w-full btn-primary"
+                        >
+                          Начислить баллы
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
               {/* News Tab */}
               {activeTab === 'news' && (
                 <motion.div
@@ -740,6 +797,82 @@ const AdminPage: React.FC = () => {
                 </motion.div>
               )}
             </>
+              {/* Tasks Tab */}
+              {activeTab === 'tasks' && (
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="space-y-8"
+                >
+                  <motion.div variants={staggerItem} className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white">Задания</h2>
+                    <button
+                      onClick={() => alert('Функция создания заданий будет добавлена позже')}
+                      className="btn-primary flex items-center space-x-2"
+                    >
+                      <span>Создать задание</span>
+                    </button>
+                  </motion.div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {tasks.map((task, index) => (
+                      <motion.div
+                        key={task.id}
+                        variants={staggerItem}
+                        whileHover={{ scale: 1.02, y: -5 }}
+                        className="card-hover p-6"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-2">
+                            <div className={`px-3 py-2 rounded-full text-sm font-bold ${
+                              task.difficulty === 'easy' ? 'text-green-400 bg-green-400/20' :
+                              task.difficulty === 'medium' ? 'text-yellow-400 bg-yellow-400/20' :
+                              'text-red-400 bg-red-400/20'
+                            }`}>
+                              {task.difficulty === 'easy' ? 'Легко' : task.difficulty === 'medium' ? 'Средне' : 'Сложно'}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-1 text-yellow-400">
+                            <Star className="h-5 w-5" />
+                            <span className="font-bold">{task.points}</span>
+                          </div>
+                        </div>
+
+                        <h3 className="text-xl font-bold text-white mb-2">{task.title}</h3>
+                        <p className="text-blue-200 mb-4 line-clamp-3">{task.description}</p>
+                        
+                        <div className="flex items-center justify-between text-blue-300 text-sm mb-4">
+                          <span>Категория: {
+                            task.category === 'study' ? 'Учёба' :
+                            task.category === 'discipline' ? 'Дисциплина' : 'Мероприятия'
+                          }</span>
+                          <span>До {new Date(task.deadline).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => alert('Функция редактирования заданий будет добавлена позже')}
+                            className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                          >
+                            Редактировать
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm('Удалить задание?')) {
+                                alert('Функция удаления заданий будет добавлена позже');
+                              }
+                            }}
+                            className="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                          >
+                            Удалить
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
           )}
 
           {/* Achievement Modal */}
@@ -757,7 +890,71 @@ const AdminPage: React.FC = () => {
 
           {/* Award Achievement Modal */}
           {showAwardModal && (
-            <div>Award Modal Placeholder</div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setShowAwardModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="glass-effect rounded-3xl max-w-2xl w-full p-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 className="text-3xl font-bold text-white mb-6">Присудить достижение</h2>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-white font-bold mb-2">Кадет</label>
+                    <select
+                      value={selectedCadetForAward}
+                      onChange={(e) => setSelectedCadetForAward(e.target.value)}
+                      className="input"
+                    >
+                      <option value="">Выберите кадета</option>
+                      {cadets.map(cadet => (
+                        <option key={cadet.id} value={cadet.id}>
+                          {cadet.name} ({cadet.platoon} взвод)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-white font-bold mb-2">Достижение</label>
+                    <select
+                      value={selectedAchievementForAward}
+                      onChange={(e) => setSelectedAchievementForAward(e.target.value)}
+                      className="input"
+                    >
+                      <option value="">Выберите достижение</option>
+                      {achievements.map(achievement => (
+                        <option key={achievement.id} value={achievement.id}>
+                          {achievement.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-4 mt-8">
+                  <button
+                    onClick={handleAwardAchievement}
+                    disabled={!selectedCadetForAward || !selectedAchievementForAward}
+                    className="flex-1 btn-primary disabled:opacity-50"
+                  >
+                    Присудить
+                  </button>
+                  <button
+                    onClick={() => setShowAwardModal(false)}
+                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition-colors"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
 
           {/* Score Modal */}
@@ -772,7 +969,106 @@ const AdminPage: React.FC = () => {
 
           {/* News Modal */}
           {showNewsModal && (
-            <div>News Modal Placeholder</div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => {
+                setShowNewsModal(false);
+                setEditingNews(null);
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="glass-effect rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 className="text-3xl font-bold text-white mb-6">
+                  {editingNews ? 'Редактировать новость' : 'Создать новость'}
+                </h2>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-white font-bold mb-2">Заголовок</label>
+                    <input
+                      type="text"
+                      value={newsForm.title}
+                      onChange={(e) => setNewsForm({...newsForm, title: e.target.value})}
+                      className="input"
+                      placeholder="Заголовок новости"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-white font-bold mb-2">Содержание</label>
+                    <textarea
+                      value={newsForm.content}
+                      onChange={(e) => setNewsForm({...newsForm, content: e.target.value})}
+                      className="input resize-none"
+                      rows={6}
+                      placeholder="Содержание новости"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-white font-bold mb-2">Автор</label>
+                      <input
+                        type="text"
+                        value={newsForm.author}
+                        onChange={(e) => setNewsForm({...newsForm, author: e.target.value})}
+                        className="input"
+                        placeholder="Автор новости"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-white font-bold mb-2">URL фонового изображения</label>
+                      <input
+                        type="url"
+                        value={newsForm.background_image_url}
+                        onChange={(e) => setNewsForm({...newsForm, background_image_url: e.target.value})}
+                        className="input"
+                        placeholder="https://images.pexels.com/..."
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="is_main"
+                      checked={newsForm.is_main}
+                      onChange={(e) => setNewsForm({...newsForm, is_main: e.target.checked})}
+                      className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="is_main" className="text-white font-bold">
+                      Главная новость
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-4 mt-8">
+                  <button
+                    onClick={editingNews ? handleUpdateNews : handleCreateNews}
+                    disabled={!newsForm.title || !newsForm.content || !newsForm.author}
+                    className="flex-1 btn-primary disabled:opacity-50"
+                  >
+                    {editingNews ? 'Обновить' : 'Создать'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowNewsModal(false);
+                      setEditingNews(null);
+                    }}
+                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition-colors"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
 
           {/* Cadet Modal */}
