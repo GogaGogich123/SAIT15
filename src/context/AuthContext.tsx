@@ -82,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: 'Администратор Иванов И.И.',
         role: 'admin'
       });
+      console.log('Admin user logged in successfully');
       return true;
     } else if (email === 'cadet@nkkk.ru' && password === 'cadet123') {
       setUser({
@@ -92,8 +93,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         squad: 2,
         cadetId: '00000000-0000-0000-0000-000000000001'
       });
+      console.log('Cadet user logged in successfully');
       return true;
     }
+    console.log('Login failed for:', email);
     return false;
   };
 

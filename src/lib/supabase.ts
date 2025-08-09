@@ -310,12 +310,24 @@ export const updateTask = async (id: string, updates: Partial<Task>): Promise<vo
 };
 
 export const updateNews = async (id: string, updates: Partial<News>): Promise<void> => {
+  console.log('Updating news in database:', id, updates);
+  
   const { error } = await supabase
     .from('news')
-    .update(updates)
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
     .eq('id', id);
   
-  if (error) throw error;
+  if (error) {
+    console.error('Database error updating news:', error);
+    throw error;
+  }
+  
+  // Очищаем кэш новостей
+  cache.delete(CACHE_KEYS.NEWS);
+  console.log('News updated successfully');
 };
 
 export const addNews = async (newsData: Omit<News, 'id' | 'created_at' | 'updated_at'>): Promise<News> => {
@@ -341,15 +353,21 @@ export const addNews = async (newsData: Omit<News, 'id' | 'created_at' | 'update
 };
 
 export const deleteNews = async (id: string): Promise<void> => {
+  console.log('Deleting news from database:', id);
+  
   const { error } = await supabase
     .from('news')
     .delete()
     .eq('id', id);
   
-  if (error) throw error;
+  if (error) {
+    console.error('Database error deleting news:', error);
+    throw error;
+  }
   
   // Очищаем кэш новостей
   cache.delete(CACHE_KEYS.NEWS);
+  console.log('News deleted successfully');
 };
 
 // Achievements functions

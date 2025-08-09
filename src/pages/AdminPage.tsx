@@ -287,6 +287,11 @@ const AdminPage: React.FC = () => {
   };
   
   const handleCreateNews = async () => {
+    if (!isAdmin) {
+      showError('Недостаточно прав для выполнения операции');
+      return;
+    }
+    
     try {
       if (!newsForm.title || !newsForm.content || !newsForm.author) {
         showError('Заполните все обязательные поля');
@@ -313,28 +318,50 @@ const AdminPage: React.FC = () => {
   const handleUpdateNews = async () => {
     if (!editingNews) return;
     
+    if (!isAdmin) {
+      showError('Недостаточно прав для выполнения операции');
+      return;
+    }
+    
     try {
+      console.log('Updating news:', editingNews.id, newsForm);
       await updateNews(editingNews.id, newsForm);
       setNews(news.map(n => 
         n.id === editingNews.id ? { ...n, ...newsForm } : n
       ));
       setShowNewsModal(false);
       setEditingNews(null);
+      setNewsForm({
+        title: '',
+        content: '',
+        author: '',
+        is_main: false,
+        background_image_url: '',
+        images: []
+      });
       success('Новость обновлена');
-    } catch (err) {
-      showError('Ошибка обновления новости');
+    } catch (err: any) {
+      console.error('Error updating news:', err);
+      showError(err.message || 'Ошибка обновления новости');
     }
   };
   
   const handleDeleteNews = async (id: string) => {
     if (!confirm('Удалить новость?')) return;
     
+    if (!isAdmin) {
+      showError('Недостаточно прав для выполнения операции');
+      return;
+    }
+    
     try {
+      console.log('Deleting news:', id);
       await deleteNews(id);
       setNews(news.filter(n => n.id !== id));
       success('Новость удалена');
-    } catch (err) {
-      showError('Ошибка удаления новости');
+    } catch (err: any) {
+      console.error('Error deleting news:', err);
+      showError(err.message || 'Ошибка удаления новости');
     }
   };
   
@@ -428,7 +455,7 @@ const AdminPage: React.FC = () => {
       author: newsItem.author,
       is_main: newsItem.is_main,
       background_image_url: newsItem.background_image_url || '',
-      images: newsItem.images || []
+      images: Array.isArray(newsItem.images) ? newsItem.images : []
     });
     setShowNewsModal(true);
   };
