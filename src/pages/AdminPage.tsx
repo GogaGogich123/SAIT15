@@ -11,6 +11,7 @@ import AdminTabs from '../components/admin/AdminTabs';
 import AchievementModal from '../components/admin/modals/AchievementModal';
 import ScoreModal from '../components/admin/modals/ScoreModal';
 import CadetModal from '../components/admin/modals/CadetModal';
+import EventModal from '../components/admin/modals/EventModal';
 import { 
   getCadets,
   getAchievements,
@@ -34,6 +35,15 @@ import {
   type News,
   type Task
 } from '../lib/supabase';
+import { 
+  getEvents,
+  getEventParticipants,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  type Event,
+  type EventParticipant
+} from '../lib/events';
 import { createCadetWithAuth, updateCadetData, deleteCadet } from '../lib/admin';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
@@ -90,18 +100,33 @@ interface CadetForm {
   avatar_url: string;
 }
 
+interface EventForm {
+  title: string;
+  description: string;
+  content: string;
+  event_date: string;
+  event_time: string;
+  location: string;
+  max_participants: number;
+  registration_deadline: string;
+  background_image_url: string;
+  images: string[];
+  category: string;
+}
 const AdminPage: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { success, error: showError } = useToast();
 
   // State
-  const [activeTab, setActiveTab] = useState<'overview' | 'cadets' | 'achievements' | 'scores' | 'news' | 'tasks'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'cadets' | 'achievements' | 'scores' | 'news' | 'tasks' | 'events'>('overview');
   const [loading, setLoading] = useState(true);
   const [cadets, setCadets] = useState<Cadet[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [autoAchievements, setAutoAchievements] = useState<AutoAchievement[]>([]);
   const [news, setNews] = useState<News[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventParticipants, setEventParticipants] = useState<{ [eventId: string]: EventParticipant[] }>({});
   const [analytics, setAnalytics] = useState<any>(null);
 
   // Modal states
@@ -110,9 +135,11 @@ const AdminPage: React.FC = () => {
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showNewsModal, setShowNewsModal] = useState(false);
   const [showCadetModal, setShowCadetModal] = useState(false);
+  const [showEventModal, setShowEventModal] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
   const [editingNews, setEditingNews] = useState<News | null>(null);
   const [editingCadet, setEditingCadet] = useState<Cadet | null>(null);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [cadetModalLoading, setCadetModalLoading] = useState(false);
   
   // Form states  
@@ -150,6 +177,19 @@ const AdminPage: React.FC = () => {
     avatar_url: ''
   });
 
+  const [eventForm, setEventForm] = useState<EventForm>({
+    title: '',
+    description: '',
+    content: '',
+    event_date: '',
+    event_time: '',
+    location: '',
+    max_participants: 0,
+    registration_deadline: '',
+    background_image_url: '',
+    images: [],
+    category: 'general'
+  });
   const [selectedCadetForAward, setSelectedCadetForAward] = useState<string>('');
   const [selectedAchievementForAward, setSelectedAchievementForAward] = useState<string>('');
   
@@ -163,12 +203,13 @@ const AdminPage: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [cadetsData, achievementsData, autoAchievementsData, newsData, tasksData, analyticsData] = await Promise.all([
+        const [cadetsData, achievementsData, autoAchievementsData, newsData, tasksData, eventsData, analyticsData] = await Promise.all([
           getCadets(),
           getAchievements(),
           getAutoAchievements(),
           getNews(),
           getTasks(),
+          getEvents(),
           getAnalytics()
         ]);
         
@@ -177,6 +218,7 @@ const AdminPage: React.FC = () => {
         setAutoAchievements(autoAchievementsData);
         setNews(newsData);
         setTasks(tasksData);
+        setEvents(eventsData);
         setAnalytics(analyticsData);
       } catch (err) {
         console.error('Error fetching admin data:', err);
@@ -435,6 +477,81 @@ const AdminPage: React.FC = () => {
     }
   };
   
+  const handleCreateEvent = async () => {
+    try {
+      if (!eventForm.title || !eventForm.description || !eventForm.event_date) {
+        showError('Заполните все обязательные поля');
+        return;
+      }
+      
+      const newEvent = await createEvent({
+        ...eventForm,
+        status: 'active',
+        max_participants: eventForm.max_participants || undefined,
+        registration_deadline: eventForm.registration_deadline || undefined,
+        background_image_url: eventForm.background_image_url || undefined,
+        event_time: eventForm.event_time || undefined,
+        location: eventForm.location || undefined,
+        content: eventForm.content || undefined
+      });
+      setEvents([...events, newEvent]);
+      setShowEventModal(false);
+      setEventForm({
+        title: '',
+        description: '',
+        content: '',
+        event_date: '',
+        event_time: '',
+        location: '',
+        max_participants: 0,
+        registration_deadline: '',
+        background_image_url: '',
+        images: [],
+        category: 'general'
+      });
+      success('Событие создано');
+    } catch (err: any) {
+      showError(err.message || 'Ошибка создания события');
+    }
+  };
+  
+  const handleUpdateEvent = async () => {
+    if (!editingEvent) return;
+    
+    try {
+      await updateEvent(editingEvent.id, eventForm);
+      setEvents(events.map(e => 
+        e.id === editingEvent.id ? { ...e, ...eventForm } : e
+      ));
+      setShowEventModal(false);
+      setEditingEvent(null);
+      success('Событие обновлено');
+    } catch (err: any) {
+      showError(err.message || 'Ошибка обновления события');
+    }
+  };
+  
+  const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
+    if (!confirm(`Удалить событие "${eventTitle}"?`)) return;
+    
+    try {
+      await deleteEvent(eventId);
+      setEvents(events.filter(e => e.id !== eventId));
+      success('Событие удалено');
+    } catch (err: any) {
+      showError(err.message || 'Ошибка удаления события');
+    }
+  };
+  
+  const loadEventParticipants = async (eventId: string) => {
+    try {
+      const participants = await getEventParticipants(eventId);
+      setEventParticipants({ ...eventParticipants, [eventId]: participants });
+    } catch (err) {
+      console.error('Error loading event participants:', err);
+    }
+  };
+  
   const openEditAchievement = (achievement: Achievement) => {
     setEditingAchievement(achievement);
     setAchievementForm({
@@ -472,6 +589,24 @@ const AdminPage: React.FC = () => {
       avatar_url: cadet.avatar_url || ''
     });
     setShowCadetModal(true);
+  };
+  
+  const openEditEvent = (event: Event) => {
+    setEditingEvent(event);
+    setEventForm({
+      title: event.title,
+      description: event.description,
+      content: event.content || '',
+      event_date: event.event_date,
+      event_time: event.event_time || '',
+      location: event.location || '',
+      max_participants: event.max_participants || 0,
+      registration_deadline: event.registration_deadline || '',
+      background_image_url: event.background_image_url || '',
+      images: event.images || [],
+      category: event.category
+    });
+    setShowEventModal(true);
   };
   
   const filteredCadets = cadets.filter(cadet => {
@@ -545,6 +680,7 @@ const AdminPage: React.FC = () => {
                     onAddScore={() => setShowScoreModal(true)}
                     onCreateNews={() => setShowNewsModal(true)}
                     onCreateCadet={() => setShowCadetModal(true)}
+                    onCreateEvent={() => setShowEventModal(true)}
                   />
                 </div>
               )}
@@ -899,6 +1035,83 @@ const AdminPage: React.FC = () => {
                   </div>
                 </motion.div>
               )}
+              
+              {/* Events Tab */}
+              {activeTab === 'events' && (
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  className="space-y-8"
+                >
+                  <motion.div variants={staggerItem} className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white">События</h2>
+                    <button
+                      onClick={() => setShowEventModal(true)}
+                      className="btn-primary flex items-center space-x-2"
+                    >
+                      <span>Создать событие</span>
+                    </button>
+                  </motion.div>
+
+                  <div className="space-y-6">
+                    {events.map((event) => (
+                      <motion.div
+                        key={event.id}
+                        variants={staggerItem}
+                        whileHover={{ scale: 1.01, y: -2 }}
+                        className="card-hover p-6 group"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <h3 className="text-2xl font-bold text-white">{event.title}</h3>
+                              <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                                event.status === 'active' ? 'bg-green-500/20 text-green-300' :
+                                event.status === 'completed' ? 'bg-blue-500/20 text-blue-300' :
+                                'bg-red-500/20 text-red-300'
+                              }`}>
+                                {event.status === 'active' ? 'Активно' :
+                                 event.status === 'completed' ? 'Завершено' : 'Отменено'}
+                              </span>
+                            </div>
+                            <p className="text-blue-200 mb-4 line-clamp-2">{event.description}</p>
+                            <div className="flex items-center space-x-6 text-blue-300 text-sm">
+                              <span>Дата: {new Date(event.event_date).toLocaleDateString('ru-RU')}</span>
+                              <span>Участников: {event.participants_count}</span>
+                              {event.location && <span>Место: {event.location}</span>}
+                            </div>
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                loadEventParticipants(event.id);
+                                // Здесь можно открыть модал с участниками
+                              }}
+                              className="p-2 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-colors"
+                            >
+                              👥
+                            </button>
+                            <button
+                              onClick={() => openEditEvent(event)}
+                              className="p-2 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-colors"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEvent(event.id, event.title)}
+                              className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </>
           )}
 
@@ -1121,6 +1334,32 @@ const AdminPage: React.FC = () => {
             loading={cadetModalLoading}
           />
         </div>
+        
+        {/* Event Modal */}
+        <EventModal
+          isOpen={showEventModal}
+          onClose={() => {
+            setShowEventModal(false);
+            setEditingEvent(null);
+            setEventForm({
+              title: '',
+              description: '',
+              content: '',
+              event_date: '',
+              event_time: '',
+              location: '',
+              max_participants: 0,
+              registration_deadline: '',
+              background_image_url: '',
+              images: [],
+              category: 'general'
+            });
+          }}
+          onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
+          form={eventForm}
+          setForm={setEventForm}
+          isEditing={!!editingEvent}
+        />
       </div>
     </motion.div>
   );

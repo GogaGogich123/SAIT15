@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Gift, Target, FileText, UserPlus } from 'lucide-react';
+import { Plus, Gift, Target, FileText, UserPlus, Calendar } from 'lucide-react';
 import { staggerItem } from '../../utils/animations';
 
 interface AdminQuickActionsProps {
@@ -9,6 +9,7 @@ interface AdminQuickActionsProps {
   onAddScore: () => void;
   onCreateNews: () => void;
   onCreateCadet: () => void;
+  onCreateEvent: () => void;
 }
 
 const AdminQuickActions: React.FC<AdminQuickActionsProps> = ({
@@ -16,12 +17,13 @@ const AdminQuickActions: React.FC<AdminQuickActionsProps> = ({
   onAwardAchievement,
   onAddScore,
   onCreateNews,
-  onCreateCadet
+  onCreateCadet,
+  onCreateEvent
 }) => {
   return (
     <motion.div variants={staggerItem} className="card-hover p-8">
       <h2 className="text-3xl font-bold text-white mb-6">Быстрые действия</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <button
           onClick={onCreateCadet}
           className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center space-x-2"
@@ -60,6 +62,14 @@ const AdminQuickActions: React.FC<AdminQuickActionsProps> = ({
         >
           <FileText className="h-5 w-5" />
           <span>Создать новость</span>
+        </button>
+        
+        <button
+          onClick={onCreateEvent}
+          className="bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center space-x-2"
+        >
+          <Calendar className="h-5 w-5" />
+          <span>Создать событие</span>
         </button>
       </div>
     </motion.div>

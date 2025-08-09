@@ -11,6 +11,8 @@ import NewsPage from './pages/NewsPage';
 import TasksPage from './pages/TasksPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
+import ForumPage from './pages/ForumPage';
+import EventsPage from './pages/EventsPage';
 import { AuthProvider } from './context/AuthContext';
 import { useToast } from './hooks/useToast';
 
@@ -26,6 +28,8 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/rating" element={<RatingPage />} />
             <Route path="/cadet/:id" element={<CadetProfile />} />
+            <Route path="/forum" element={<ForumPage />} />
+            <Route path="/events" element={<EventsPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/login" element={<LoginPage />} />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, Users, Trophy, Target, FileText, CheckSquare } from 'lucide-react';
+import { BarChart3, Users, Trophy, Target, FileText, CheckSquare, Calendar } from 'lucide-react';
 import { staggerContainer, staggerItem } from '../../utils/animations';
 
 interface AdminTabsProps {
@@ -15,7 +15,8 @@ const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
     { key: 'achievements', name: 'Достижения', icon: Trophy },
     { key: 'scores', name: 'Баллы', icon: Target },
     { key: 'news', name: 'Новости', icon: FileText },
-    { key: 'tasks', name: 'Задания', icon: CheckSquare }
+    { key: 'tasks', name: 'Задания', icon: CheckSquare },
+    { key: 'events', name: 'События', icon: Calendar }
   ];
 
   return (
