@@ -460,7 +460,15 @@ export const updateCadetScores = async (cadetId: string, category: 'study' | 'di
     events_score: currentScores?.events_score || 0
   };
   
-  newScores[`${category}_score`] = Math.max(0, (newScores[`${category}_score`] || 0) + points);
+  // Правильно обновляем баллы по категории
+  if (category === 'study') {
+    newScores.study_score = Math.max(0, newScores.study_score + points);
+  } else if (category === 'discipline') {
+    newScores.discipline_score = Math.max(0, newScores.discipline_score + points);
+  } else if (category === 'events') {
+    newScores.events_score = Math.max(0, newScores.events_score + points);
+  }
+  
   const totalScore = newScores.study_score + newScores.discipline_score + newScores.events_score;
   
   if (currentScores) {
@@ -490,6 +498,10 @@ export const updateCadetScores = async (cadetId: string, category: 'study' | 'di
     .eq('id', cadetId);
   
   if (updateCadetError) throw updateCadetError;
+  
+  // Очищаем кэш кадетов после обновления баллов
+  cache.delete(CACHE_KEYS.CADETS);
+  cache.delete(`${CACHE_KEYS.CADETS}_${cadetId}`);
 };
 
 // Analytics functions
