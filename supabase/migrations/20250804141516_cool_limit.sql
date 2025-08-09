@@ -1,0 +1,1 @@
+Couldn't find the requested file /supabase/migrations/20250804141516_cool_limit.sql in GogaGogich123/SAIT2.
