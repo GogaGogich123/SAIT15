@@ -154,9 +154,13 @@ export const createPost = async (topicId: string, content: string, authorId: str
 };
 
 export const incrementTopicViews = async (topicId: string): Promise<void> => {
-  const { error } = await supabase.rpc('increment_topic_views', {
-    topic_uuid: topicId
-  });
+  // Увеличиваем счетчик просмотров
+  const { error } = await supabase
+    .from('forum_topics')
+    .update({ 
+      views_count: supabase.raw('views_count + 1')
+    })
+    .eq('id', topicId);
   
   if (error) throw error;
 };
