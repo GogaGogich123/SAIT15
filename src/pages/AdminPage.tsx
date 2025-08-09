@@ -796,7 +796,6 @@ const AdminPage: React.FC = () => {
                   </div>
                 </motion.div>
               )}
-            </>
               {/* Tasks Tab */}
               {activeTab === 'tasks' && (
                 <motion.div
@@ -873,6 +872,7 @@ const AdminPage: React.FC = () => {
                   </div>
                 </motion.div>
               )}
+            </>
           )}
 
           {/* Achievement Modal */}
