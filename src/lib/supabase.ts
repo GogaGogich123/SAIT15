@@ -184,9 +184,9 @@ export const getCadetScores = async (cadetId: string): Promise<Score | null> => 
 
 const getMockScore = (cadetId: string): Score | null => {
   const mockScores: { [key: string]: Score } = {
-    '1': {
-      id: 'score-1',
-      cadet_id: '1',
+    '00000000-0000-0000-0000-000000000001': {
+      id: '00000000-0000-0000-0000-000000000011',
+      cadet_id: '00000000-0000-0000-0000-000000000001',
       study_score: 95,
       discipline_score: 88,
       events_score: 92,
@@ -195,9 +195,9 @@ const getMockScore = (cadetId: string): Score | null => {
       description: '',
       created_at: '2024-01-01'
     },
-    '2': {
-      id: 'score-2',
-      cadet_id: '2',
+    '00000000-0000-0000-0000-000000000002': {
+      id: '00000000-0000-0000-0000-000000000012',
+      cadet_id: '00000000-0000-0000-0000-000000000002',
       study_score: 92,
       discipline_score: 86,
       events_score: 90,
@@ -206,9 +206,9 @@ const getMockScore = (cadetId: string): Score | null => {
       description: '',
       created_at: '2024-01-01'
     },
-    '3': {
-      id: 'score-3',
-      cadet_id: '3',
+    '00000000-0000-0000-0000-000000000003': {
+      id: '00000000-0000-0000-0000-000000000013',
+      cadet_id: '00000000-0000-0000-0000-000000000003',
       study_score: 88,
       discipline_score: 84,
       events_score: 83,
@@ -217,9 +217,9 @@ const getMockScore = (cadetId: string): Score | null => {
       description: '',
       created_at: '2024-01-01'
     },
-    '4': {
-      id: 'score-4',
-      cadet_id: '4',
+    '00000000-0000-0000-0000-000000000004': {
+      id: '00000000-0000-0000-0000-000000000014',
+      cadet_id: '00000000-0000-0000-0000-000000000004',
       study_score: 85,
       discipline_score: 82,
       events_score: 75,
@@ -228,9 +228,9 @@ const getMockScore = (cadetId: string): Score | null => {
       description: '',
       created_at: '2024-01-01'
     },
-    '5': {
-      id: 'score-5',
-      cadet_id: '5',
+    '00000000-0000-0000-0000-000000000005': {
+      id: '00000000-0000-0000-0000-000000000015',
+      cadet_id: '00000000-0000-0000-0000-000000000005',
       study_score: 82,
       discipline_score: 78,
       events_score: 78,
@@ -268,15 +268,15 @@ export const getCadetAchievements = async (cadetId: string): Promise<CadetAchiev
 };
 
 const getMockCadetAchievements = (cadetId: string): CadetAchievement[] => {
-  if (cadetId === '1') {
+  if (cadetId === '00000000-0000-0000-0000-000000000001') {
     return [
       {
-        id: 'ach-1',
-        cadet_id: '1',
-        auto_achievement_id: 'auto-1',
+        id: '00000000-0000-0000-0000-000000000021',
+        cadet_id: '00000000-0000-0000-0000-000000000001',
+        auto_achievement_id: '00000000-0000-0000-0000-000000000031',
         awarded_date: '2024-01-15',
         auto_achievement: {
-          id: 'auto-1',
+          id: '00000000-0000-0000-0000-000000000031',
           title: 'Первые шаги',
           description: 'Набрать 50 баллов',
           icon: 'Zap',
@@ -312,7 +312,7 @@ export const getAutoAchievements = async (): Promise<AutoAchievement[]> => {
 const getMockAutoAchievements = (): AutoAchievement[] => {
   return [
     {
-      id: 'auto-1',
+      id: '00000000-0000-0000-0000-000000000031',
       title: 'Первые шаги',
       description: 'Набрать 50 баллов',
       icon: 'Zap',
@@ -321,7 +321,7 @@ const getMockAutoAchievements = (): AutoAchievement[] => {
       requirement_value: 50
     },
     {
-      id: 'auto-2',
+      id: '00000000-0000-0000-0000-000000000032',
       title: 'На пути к успеху',
       description: 'Набрать 100 баллов',
       icon: 'Target',
@@ -330,7 +330,7 @@ const getMockAutoAchievements = (): AutoAchievement[] => {
       requirement_value: 100
     },
     {
-      id: 'auto-3',
+      id: '00000000-0000-0000-0000-000000000033',
       title: 'Отличник',
       description: 'Набрать 200 баллов',
       icon: 'Trophy',
@@ -339,7 +339,7 @@ const getMockAutoAchievements = (): AutoAchievement[] => {
       requirement_value: 200
     },
     {
-      id: 'auto-4',
+      id: '00000000-0000-0000-0000-000000000034',
       title: 'Мастер учёбы',
       description: 'Набрать 80 баллов по учёбе',
       icon: 'BookOpen',
@@ -349,7 +349,7 @@ const getMockAutoAchievements = (): AutoAchievement[] => {
       requirement_value: 80
     },
     {
-      id: 'auto-5',
+      id: '00000000-0000-0000-0000-000000000035',
       title: 'Дисциплинированный',
       description: 'Набрать 80 баллов по дисциплине',
       icon: 'Shield',
@@ -383,27 +383,27 @@ export const getScoreHistory = async (cadetId: string): Promise<ScoreHistory[]> 
 };
 
 const getMockScoreHistory = (cadetId: string): ScoreHistory[] => {
-  if (cadetId === '1') {
+  if (cadetId === '00000000-0000-0000-0000-000000000001') {
     return [
       {
-        id: 'hist-1',
-        cadet_id: '1',
+        id: '00000000-0000-0000-0000-000000000041',
+        cadet_id: '00000000-0000-0000-0000-000000000001',
         category: 'study',
         points: 5,
         description: 'Отличная работа на уроке истории',
         created_at: '2024-03-15T10:00:00Z'
       },
       {
-        id: 'hist-2',
-        cadet_id: '1',
+        id: '00000000-0000-0000-0000-000000000042',
+        cadet_id: '00000000-0000-0000-0000-000000000001',
         category: 'discipline',
         points: 3,
         description: 'Примерное поведение на построении',
         created_at: '2024-03-14T08:00:00Z'
       },
       {
-        id: 'hist-3',
-        cadet_id: '1',
+        id: '00000000-0000-0000-0000-000000000043',
+        cadet_id: '00000000-0000-0000-0000-000000000001',
         category: 'events',
         points: 8,
         description: 'Активное участие в спортивном мероприятии',
@@ -444,7 +444,7 @@ export const getNews = async (): Promise<News[]> => {
 const getMockNews = (): News[] => {
   const result = [
     {
-      id: 'news-1',
+      id: '00000000-0000-0000-0000-000000000051',
       title: 'Победа в региональных соревнованиях',
       content: 'Кадеты нашего корпуса заняли первое место в региональных военно-спортивных соревнованиях. Команда показала отличную подготовку и слаженную работу.',
       author: 'Администрация НККК',
@@ -454,7 +454,7 @@ const getMockNews = (): News[] => {
       created_at: '2024-03-15T12:00:00Z'
     },
     {
-      id: 'news-2',
+      id: '00000000-0000-0000-0000-000000000052',
       title: 'День открытых дверей',
       content: 'В субботу состоится день открытых дверей для будущих кадетов и их родителей. Приглашаем всех желающих познакомиться с нашим корпусом.',
       author: 'Приёмная комиссия',
@@ -464,7 +464,7 @@ const getMockNews = (): News[] => {
       created_at: '2024-03-14T10:00:00Z'
     },
     {
-      id: 'news-3',
+      id: '00000000-0000-0000-0000-000000000053',
       title: 'Новые достижения кадетов',
       content: 'Поздравляем кадетов 10-го взвода с успешным завершением учебного модуля по истории казачества.',
       author: 'Преподавательский состав',
@@ -510,7 +510,7 @@ export const getTasks = async (): Promise<Task[]> => {
 const getMockTasks = (): Task[] => {
   const result = [
     {
-      id: 'task-1',
+      id: '00000000-0000-0000-0000-000000000061',
       title: 'Подготовить доклад по истории казачества',
       description: 'Подготовить и представить доклад на тему "История кубанского казачества" объёмом не менее 5 страниц.',
       category: 'study' as const,
@@ -521,7 +521,7 @@ const getMockTasks = (): Task[] => {
       created_at: '2024-03-01T10:00:00Z'
     },
     {
-      id: 'task-2',
+      id: '00000000-0000-0000-0000-000000000062',
       title: 'Участие в утренней зарядке',
       description: 'Принять участие в утренней зарядке в течение недели без пропусков.',
       category: 'discipline' as const,
@@ -532,7 +532,7 @@ const getMockTasks = (): Task[] => {
       created_at: '2024-03-01T10:00:00Z'
     },
     {
-      id: 'task-3',
+      id: '00000000-0000-0000-0000-000000000063',
       title: 'Организация мероприятия для младших кадетов',
       description: 'Организовать и провести познавательное мероприятие для кадетов младших курсов.',
       category: 'events' as const,
@@ -697,21 +697,21 @@ export const getAchievements = async (): Promise<Achievement[]> => {
 const getMockAchievements = (): Achievement[] => {
   return [
     {
-      id: 'ach-1',
+      id: '00000000-0000-0000-0000-000000000071',
       title: 'Отличник учёбы',
       description: 'За выдающиеся успехи в учебной деятельности',
       icon: 'Star',
       color: 'from-blue-500 to-blue-700'
     },
     {
-      id: 'ach-2',
+      id: '00000000-0000-0000-0000-000000000072',
       title: 'Лидер взвода',
       description: 'За проявленные лидерские качества',
       icon: 'Crown',
       color: 'from-yellow-500 to-yellow-700'
     },
     {
-      id: 'ach-3',
+      id: '00000000-0000-0000-0000-000000000073',
       title: 'Активист корпуса',
       description: 'За активное участие в мероприятиях',
       icon: 'Users',
@@ -855,7 +855,7 @@ export const updateCadetScores = async (cadetId: string, category: 'study' | 'di
 const getMockCadets = (): Cadet[] => {
   const result = [
     {
-      id: '1',
+      id: '00000000-0000-0000-0000-000000000001',
       name: 'Петров Алексей Владимирович',
       platoon: '10-1',
       squad: 1,
@@ -865,7 +865,7 @@ const getMockCadets = (): Cadet[] => {
       join_date: '2023-09-01'
     },
     {
-      id: '2',
+      id: '00000000-0000-0000-0000-000000000002',
       name: 'Сидоров Дмитрий Александрович',
       platoon: '10-1',
       squad: 1,
@@ -875,7 +875,7 @@ const getMockCadets = (): Cadet[] => {
       join_date: '2023-09-01'
     },
     {
-      id: '3',
+      id: '00000000-0000-0000-0000-000000000003',
       name: 'Козлов Михаил Сергеевич',
       platoon: '10-2',
       squad: 2,
@@ -885,7 +885,7 @@ const getMockCadets = (): Cadet[] => {
       join_date: '2023-09-01'
     },
     {
-      id: '4',
+      id: '00000000-0000-0000-0000-000000000004',
       name: 'Волков Андрей Николаевич',
       platoon: '9-1',
       squad: 1,
@@ -895,7 +895,7 @@ const getMockCadets = (): Cadet[] => {
       join_date: '2023-09-01'
     },
     {
-      id: '5',
+      id: '00000000-0000-0000-0000-000000000005',
       name: 'Морозов Владислав Игоревич',
       platoon: '9-2',
       squad: 2,

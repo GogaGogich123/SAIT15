@@ -78,19 +78,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const mockLogin = (email: string, password: string): boolean => {
     if (email === 'admin@nkkk.ru' && password === 'admin123') {
       setUser({
-        id: '1',
+        id: '00000000-0000-0000-0000-000000000001',
         name: 'Администратор Иванов И.И.',
         role: 'admin'
       });
       return true;
     } else if (email === 'cadet@nkkk.ru' && password === 'cadet123') {
       setUser({
-        id: 'cadet1',
+        id: '00000000-0000-0000-0000-000000000002',
         name: 'Петров Алексей Владимирович',
         role: 'cadet',
         platoon: '10-1',
         squad: 2,
-        cadetId: 'cadet1'
+        cadetId: '00000000-0000-0000-0000-000000000001'
       });
       return true;
     }
