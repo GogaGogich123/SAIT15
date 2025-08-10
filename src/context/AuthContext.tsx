@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface User {
@@ -29,83 +29,6 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          setUser(null);
-        } else if (session?.user) {
-          // Try to get cadet data for authenticated user
-          const { data: cadetData } = await supabase
-            .from('cadets')
-            .select('*')
-            .eq('auth_user_id', session.user.id)
-            .maybeSingle();
-
-          if (cadetData) {
-            setUser({
-              id: session.user.id,
-              name: cadetData.name,
-              role: 'cadet',
-              platoon: cadetData.platoon,
-              squad: cadetData.squad,
-              cadetId: cadetData.id
-            });
-          } else {
-            // No cadet data found, clear session
-            await supabase.auth.signOut();
-            setUser(null);
-          }
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Session initialization error:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT' || !session?.user) {
-          setUser(null);
-        } else if (event === 'SIGNED_IN' && session?.user) {
-          // Try to get cadet data for authenticated user
-          const { data: cadetData } = await supabase
-            .from('cadets')
-            .select('*')
-            .eq('auth_user_id', session.user.id)
-            .maybeSingle();
-
-          if (cadetData) {
-            setUser({
-              id: session.user.id,
-              name: cadetData.name,
-              role: 'cadet',
-              platoon: cadetData.platoon,
-              squad: cadetData.squad,
-              cadetId: cadetData.id
-            });
-          }
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -184,15 +107,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAdmin = user?.role === 'admin';
-
-  // Show loading state while initializing
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isAdmin }}>
