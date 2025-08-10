@@ -154,10 +154,19 @@ export const createPost = async (topicId: string, content: string, authorId: str
 };
 
 export const incrementTopicViews = async (topicId: string): Promise<void> => {
-  // Увеличиваем счетчик просмотров
+  // First get the current views count
+  const { data: currentTopic, error: fetchError } = await supabase
+    .from('forum_topics')
+    .select('views_count')
+    .eq('id', topicId)
+    .single();
+  
+  if (fetchError) throw fetchError;
+  
+  // Then increment it
   const { error } = await supabase
     .from('forum_topics')
-    .update({ views_count: supabase.increment(1) })
+    .update({ views_count: (currentTopic?.views_count || 0) + 1 })
     .eq('id', topicId);
   
   if (error) throw error;
