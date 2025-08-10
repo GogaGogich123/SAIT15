@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { sql } from '@supabase/postgrest-js';
+import { sql } from '@supabase/supabase-js';
 
 // Types
 export interface ForumCategory {
