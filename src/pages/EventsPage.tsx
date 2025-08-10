@@ -95,6 +95,15 @@ const EventsPage: React.FC = () => {
           ? { ...event, participants_count: event.participants_count + 1 }
           : event
       ));
+      
+      // Обновляем выбранное событие, если оно открыто
+      if (selectedEvent && selectedEvent.id === eventId) {
+        setSelectedEvent({
+          ...selectedEvent,
+          participants_count: selectedEvent.participants_count + 1
+        });
+      }
+      
       success('Вы успешно зарегистрированы на событие!');
     } catch (err) {
       console.error('Error registering for event:', err);
@@ -113,6 +122,15 @@ const EventsPage: React.FC = () => {
           ? { ...event, participants_count: Math.max(0, event.participants_count - 1) }
           : event
       ));
+      
+      // Обновляем выбранное событие, если оно открыто
+      if (selectedEvent && selectedEvent.id === eventId) {
+        setSelectedEvent({
+          ...selectedEvent,
+          participants_count: Math.max(0, selectedEvent.participants_count - 1)
+        });
+      }
+      
       success('Регистрация отменена');
     } catch (err) {
       console.error('Error canceling registration:', err);

@@ -671,25 +671,24 @@ const AdminPage: React.FC = () => {
                              event.status === 'completed' ? 'Завершено' : 'Отменено'}
                           </span>
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="grid grid-cols-3 gap-2">
                           <button
                             onClick={() => handleViewEventParticipants(event)}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            className="bg-green-600 hover:bg-green-700 text-white px-2 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center"
                           >
-                            <Users className="h-4 w-4 mr-1 inline" />
-                            Участники
+                            <Users className="h-3 w-3" />
                           </button>
                           <button
                             onClick={() => handleEditEvent(event)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3 w-3" />
                           </button>
                           <button
                             onClick={() => handleDeleteEvent(event.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            className="bg-red-600 hover:bg-red-700 text-white px-2 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3" />
                           </button>
                         </div>
                       </motion.div>
