@@ -1,128 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Star, Trophy, Medal, Crown, Award, Target, Zap, Heart, BookOpen, Users, Flame, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Users, 
+  Trophy, 
+  Target, 
+  FileText, 
+  CheckSquare, 
+  Calendar,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Gift,
+  UserPlus,
+  BarChart3
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../hooks/useToast';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AdminTabs from '../components/admin/AdminTabs';
 import AdminStats from '../components/admin/AdminStats';
 import AdminQuickActions from '../components/admin/AdminQuickActions';
-import AdminTabs from '../components/admin/AdminTabs';
 import AchievementModal from '../components/admin/modals/AchievementModal';
-import ScoreModal from '../components/admin/modals/ScoreModal';
 import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
+import ScoreModal from '../components/admin/modals/ScoreModal';
+import { useToast } from '../hooks/useToast';
 import { 
-  getCadets,
-  getAchievements,
-  getAutoAchievements,
-  addAchievement,
-  updateAchievement,
+  getCadets, 
+  getAchievements, 
+  addAchievement, 
+  updateAchievement, 
   deleteAchievement,
   awardAchievement,
   addScoreHistory,
   updateCadetScores,
-  getAnalytics,
+  getNews,
   addNews,
   updateNews,
   deleteNews,
-  getNews,
   getTasks,
-  updateTask,
+  getAnalytics,
   type Cadet,
   type Achievement,
-  type AutoAchievement,
   type News,
   type Task
 } from '../lib/supabase';
 import { 
-  getEvents,
-  getEventParticipants,
-  createEvent,
-  updateEvent,
+  getEvents, 
+  getEventParticipants, 
+  createEvent, 
+  updateEvent, 
   deleteEvent,
   type Event,
   type EventParticipant
 } from '../lib/events';
-import { createCadetWithAuth, updateCadetData, deleteCadet } from '../lib/admin';
+import { 
+  createCadetWithAuth, 
+  updateCadetData, 
+  deleteCadet,
+  getCadetsStats
+} from '../lib/admin';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
-// Helper function to get icon component by name
-const getIconComponent = (iconName: string) => {
-  const icons: { [key: string]: any } = {
-    Star,
-    Trophy,
-    Medal,
-    Crown,
-    Award,
-    Target,
-    Zap,
-    Heart,
-    BookOpen,
-    Users,
-    Flame,
-    Sparkles
-  };
-  return icons[iconName] || Star;
-};
-
-interface AchievementForm {
-  title: string;
-  description: string;
-  category: string;
-  icon: string;
-  color: string;
-}
-
-interface ScoreForm {
-  cadetId: string;
-  category: 'study' | 'discipline' | 'events';
-  points: number;
-  description: string;
-}
-
-interface NewsForm {
-  title: string;
-  content: string;
-  author: string;
-  is_main: boolean;
-  background_image_url: string;
-  images: string[];
-}
-
-interface CadetForm {
-  name: string;
-  email: string;
-  phone: string;
-  platoon: string;
-  squad: number;
-  password: string;
-  avatar_url: string;
-}
-
-interface EventForm {
-  title: string;
-  description: string;
-  content: string;
-  event_date: string;
-  event_time: string;
-  location: string;
-  max_participants: number;
-  registration_deadline: string;
-  background_image_url: string;
-  images: string[];
-  category: string;
-}
 const AdminPage: React.FC = () => {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { success, error: showError } = useToast();
 
   // State
-  const [activeTab, setActiveTab] = useState<'overview' | 'cadets' | 'achievements' | 'scores' | 'news' | 'tasks' | 'events'>('overview');
+  const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [cadets, setCadets] = useState<Cadet[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [autoAchievements, setAutoAchievements] = useState<AutoAchievement[]>([]);
   const [news, setNews] = useState<News[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -130,44 +81,21 @@ const AdminPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<any>(null);
 
   // Modal states
-  const [showAchievementModal, setShowAchievementModal] = useState(false);
-  const [showAwardModal, setShowAwardModal] = useState(false);
-  const [showScoreModal, setShowScoreModal] = useState(false);
-  const [showNewsModal, setShowNewsModal] = useState(false);
-  const [showCadetModal, setShowCadetModal] = useState(false);
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
-  const [editingNews, setEditingNews] = useState<News | null>(null);
-  const [editingCadet, setEditingCadet] = useState<Cadet | null>(null);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [cadetModalLoading, setCadetModalLoading] = useState(false);
-  
-  // Form states  
-  const [achievementForm, setAchievementForm] = useState<AchievementForm>({
+  const [achievementModal, setAchievementModal] = useState({ isOpen: false, isEditing: false, achievement: null });
+  const [cadetModal, setCadetModal] = useState({ isOpen: false, isEditing: false, cadet: null });
+  const [eventModal, setEventModal] = useState({ isOpen: false, isEditing: false, event: null });
+  const [scoreModal, setScoreModal] = useState({ isOpen: false });
+
+  // Form states
+  const [achievementForm, setAchievementForm] = useState({
     title: '',
     description: '',
-    category: 'general',
+    category: '',
     icon: 'Star',
     color: 'from-blue-500 to-blue-700'
   });
 
-  const [scoreForm, setScoreForm] = useState<ScoreForm>({
-    cadetId: '',
-    category: 'study',
-    points: 0,
-    description: ''
-  });
-  
-  const [newsForm, setNewsForm] = useState<NewsForm>({
-    title: '',
-    content: '',
-    author: '',
-    is_main: false,
-    background_image_url: '',
-    images: []
-  });
-
-  const [cadetForm, setCadetForm] = useState<CadetForm>({
+  const [cadetForm, setCadetForm] = useState({
     name: '',
     email: '',
     phone: '',
@@ -177,7 +105,7 @@ const AdminPage: React.FC = () => {
     avatar_url: ''
   });
 
-  const [eventForm, setEventForm] = useState<EventForm>({
+  const [eventForm, setEventForm] = useState({
     title: '',
     description: '',
     content: '',
@@ -187,442 +115,156 @@ const AdminPage: React.FC = () => {
     max_participants: 0,
     registration_deadline: '',
     background_image_url: '',
-    images: [],
+    images: [] as string[],
     category: 'general'
   });
-  const [selectedCadetForAward, setSelectedCadetForAward] = useState<string>('');
-  const [selectedAchievementForAward, setSelectedAchievementForAward] = useState<string>('');
-  
-  // Search and filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterPlatoon, setFilterPlatoon] = useState('all');
 
+  const [scoreForm, setScoreForm] = useState({
+    cadetId: '',
+    category: 'study' as 'study' | 'discipline' | 'events',
+    points: 0,
+    description: ''
+  });
+
+  // Check admin access
   useEffect(() => {
-    if (!isAdmin) return;
-    
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (user.role !== 'admin') {
+      navigate('/');
+      return;
+    }
+  }, [user, navigate]);
+
+  // Fetch data
+  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [cadetsData, achievementsData, autoAchievementsData, newsData, tasksData, eventsData, analyticsData] = await Promise.all([
+        const [cadetsData, achievementsData, newsData, tasksData, eventsData, analyticsData] = await Promise.all([
           getCadets(),
           getAchievements(),
-          getAutoAchievements(),
           getNews(),
           getTasks(),
           getEvents(),
           getAnalytics()
         ]);
-        
+
         setCadets(cadetsData);
         setAchievements(achievementsData);
-        setAutoAchievements(autoAchievementsData);
         setNews(newsData);
         setTasks(tasksData);
         setEvents(eventsData);
         setAnalytics(analyticsData);
-      } catch (err) {
-        console.error('Error fetching admin data:', err);
+
+        // Загружаем участников для каждого события
+        const participantsData: { [eventId: string]: EventParticipant[] } = {};
+        for (const event of eventsData) {
+          try {
+            const participants = await getEventParticipants(event.id);
+            participantsData[event.id] = participants;
+          } catch (error) {
+            console.error(`Error fetching participants for event ${event.id}:`, error);
+            participantsData[event.id] = [];
+          }
+        }
+        setEventParticipants(participantsData);
+
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
         showError('Ошибка загрузки данных');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [isAdmin, showError]);
+    if (user?.role === 'admin') {
+      fetchData();
+    }
+  }, [user, showError]);
 
+  // Achievement handlers
   const handleCreateAchievement = async () => {
     try {
-      if (!achievementForm.title || !achievementForm.description) {
-        showError('Заполните все обязательные поля');
-        return;
-      }
-      
       const newAchievement = await addAchievement(achievementForm);
       setAchievements([...achievements, newAchievement]);
-      setShowAchievementModal(false);
-      setAchievementForm({
-        title: '',
-        description: '',
-        category: 'general',
-        icon: 'Star',
-        color: 'from-blue-500 to-blue-700'
-      });
+      setAchievementModal({ isOpen: false, isEditing: false, achievement: null });
+      setAchievementForm({ title: '', description: '', category: '', icon: 'Star', color: 'from-blue-500 to-blue-700' });
       success('Достижение создано');
-    } catch (err) {
+    } catch (error) {
       showError('Ошибка создания достижения');
     }
   };
-  
-  const handleUpdateAchievement = async () => {
-    if (!editingAchievement) return;
-    
+
+  // Cadet handlers
+  const handleCreateCadet = async () => {
     try {
-      await updateAchievement(editingAchievement.id, achievementForm);
-      setAchievements(achievements.map(a => 
-        a.id === editingAchievement.id ? { ...a, ...achievementForm } : a
-      ));
-      setShowAchievementModal(false);
-      setEditingAchievement(null);
-      success('Достижение обновлено');
-    } catch (err) {
-      showError('Ошибка обновления достижения');
+      const newCadet = await createCadetWithAuth(cadetForm);
+      setCadets([...cadets, newCadet]);
+      setCadetModal({ isOpen: false, isEditing: false, cadet: null });
+      setCadetForm({ name: '', email: '', phone: '', platoon: '', squad: 0, password: '', avatar_url: '' });
+      success('Кадет создан');
+    } catch (error) {
+      showError('Ошибка создания кадета');
     }
   };
-  
-  const handleDeleteAchievement = async (id: string) => {
-    if (!confirm('Удалить достижение?')) return;
-    
+
+  // Event handlers
+  const handleCreateEvent = async () => {
     try {
-      await deleteAchievement(id);
-      setAchievements(achievements.filter(a => a.id !== id));
-      success('Достижение удалено');
-    } catch (err) {
-      showError('Ошибка удаления достижения');
+      const newEvent = await createEvent({
+        ...eventForm,
+        status: 'active',
+        participants_count: 0
+      });
+      setEvents([...events, newEvent]);
+      setEventParticipants({ ...eventParticipants, [newEvent.id]: [] });
+      setEventModal({ isOpen: false, isEditing: false, event: null });
+      setEventForm({
+        title: '', description: '', content: '', event_date: '', event_time: '',
+        location: '', max_participants: 0, registration_deadline: '',
+        background_image_url: '', images: [], category: 'general'
+      });
+      success('Событие создано');
+    } catch (error) {
+      showError('Ошибка создания события');
     }
   };
-  
-  const handleAwardAchievement = async () => {
-    if (!selectedCadetForAward || !selectedAchievementForAward || !user) return;
-    
-    try {
-      await awardAchievement(selectedCadetForAward, selectedAchievementForAward, user.id);
-      setShowAwardModal(false);
-      setSelectedCadetForAward('');
-      setSelectedAchievementForAward('');
-      success('Достижение присуждено');
-    } catch (err) {
-      showError('Ошибка присуждения достижения');
-    }
-  };
-  
+
+  // Score handlers
   const handleAddScore = async () => {
-    if (!user) return;
-    
     try {
-      if (!scoreForm.cadetId || !scoreForm.description || scoreForm.points === 0) {
-        showError('Заполните все поля');
-        return;
-      }
-      
       await addScoreHistory({
         cadet_id: scoreForm.cadetId,
         category: scoreForm.category,
         points: scoreForm.points,
-        description: scoreForm.description,
-        awarded_by: user.id
+        description: scoreForm.description
       });
       
       await updateCadetScores(scoreForm.cadetId, scoreForm.category, scoreForm.points);
       
-      setShowScoreModal(false);
-      setScoreForm({
-        cadetId: '',
-        category: 'study',
-        points: 0,
-        description: ''
-      });
+      // Обновляем список кадетов
+      const updatedCadets = await getCadets();
+      setCadets(updatedCadets);
+      
+      setScoreModal({ isOpen: false });
+      setScoreForm({ cadetId: '', category: 'study', points: 0, description: '' });
       success('Баллы начислены');
-    } catch (err) {
+    } catch (error) {
       showError('Ошибка начисления баллов');
     }
   };
-  
-  const handleCreateNews = async () => {
-    if (!isAdmin) {
-      showError('Недостаточно прав для выполнения операции');
-      return;
-    }
-    
-    try {
-      if (!newsForm.title || !newsForm.content || !newsForm.author) {
-        showError('Заполните все обязательные поля');
-        return;
-      }
-      
-      const newNews = await addNews(newsForm);
-      setNews([newNews, ...news]);
-      setShowNewsModal(false);
-      setNewsForm({
-        title: '',
-        content: '',
-        author: '',
-        is_main: false,
-        background_image_url: '',
-        images: []
-      });
-      success('Новость создана');
-    } catch (err) {
-      showError('Ошибка создания новости');
-    }
-  };
-  
-  const handleUpdateNews = async () => {
-    if (!editingNews) return;
-    
-    if (!isAdmin) {
-      showError('Недостаточно прав для выполнения операции');
-      return;
-    }
-    
-    try {
-      console.log('Updating news:', editingNews.id, newsForm);
-      await updateNews(editingNews.id, newsForm);
-      setNews(news.map(n => 
-        n.id === editingNews.id ? { ...n, ...newsForm } : n
-      ));
-      setShowNewsModal(false);
-      setEditingNews(null);
-      setNewsForm({
-        title: '',
-        content: '',
-        author: '',
-        is_main: false,
-        background_image_url: '',
-        images: []
-      });
-      success('Новость обновлена');
-    } catch (err: any) {
-      console.error('Error updating news:', err);
-      showError(err.message || 'Ошибка обновления новости');
-    }
-  };
-  
-  const handleDeleteNews = async (id: string) => {
-    if (!confirm('Удалить новость?')) return;
-    
-    if (!isAdmin) {
-      showError('Недостаточно прав для выполнения операции');
-      return;
-    }
-    
-    try {
-      console.log('Deleting news:', id);
-      await deleteNews(id);
-      setNews(news.filter(n => n.id !== id));
-      success('Новость удалена');
-    } catch (err: any) {
-      console.error('Error deleting news:', err);
-      showError(err.message || 'Ошибка удаления новости');
-    }
-  };
-  
-  const handleCreateCadet = async () => {
-    try {
-      setCadetModalLoading(true);
-      
-      if (!cadetForm.name || !cadetForm.email || !cadetForm.platoon || !cadetForm.squad || !cadetForm.password) {
-        showError('Заполните все обязательные поля');
-        return;
-      }
-      
-      const newCadet = await createCadetWithAuth(cadetForm);
-      setCadets([...cadets, newCadet]);
-      setShowCadetModal(false);
-      setCadetForm({
-        name: '',
-        email: '',
-        phone: '',
-        platoon: '',
-        squad: 0,
-        password: '',
-        avatar_url: ''
-      });
-      success('Кадет успешно создан');
-    } catch (err: any) {
-      showError(err.message || 'Ошибка создания кадета');
-    } finally {
-      setCadetModalLoading(false);
-    }
-  };
-  
-  const handleUpdateCadet = async () => {
-    if (!editingCadet) return;
-    
-    try {
-      setCadetModalLoading(true);
-      
-      const updates = {
-        name: cadetForm.name,
-        email: cadetForm.email,
-        phone: cadetForm.phone || null,
-        platoon: cadetForm.platoon,
-        squad: cadetForm.squad,
-        avatar_url: cadetForm.avatar_url || null
-      };
-      
-      const updatedCadet = await updateCadetData(editingCadet.id, updates);
-      setCadets(cadets.map(c => 
-        c.id === editingCadet.id ? { ...c, ...updatedCadet } : c
-      ));
-      setShowCadetModal(false);
-      setEditingCadet(null);
-      success('Кадет обновлен');
-    } catch (err: any) {
-      showError(err.message || 'Ошибка обновления кадета');
-    } finally {
-      setCadetModalLoading(false);
-    }
-  };
-  
-  const handleDeleteCadet = async (cadetId: string, cadetName: string) => {
-    if (!confirm(`Удалить кадета "${cadetName}"? Это также удалит его учетную запись для входа в систему.`)) return;
-    
-    try {
-      await deleteCadet(cadetId);
-      setCadets(cadets.filter(c => c.id !== cadetId));
-      success('Кадет удален');
-    } catch (err: any) {
-      showError(err.message || 'Ошибка удаления кадета');
-    }
-  };
-  
-  const handleCreateEvent = async () => {
-    try {
-      if (!eventForm.title || !eventForm.description || !eventForm.event_date) {
-        showError('Заполните все обязательные поля');
-        return;
-      }
-      
-      const newEvent = await createEvent({
-        ...eventForm,
-        status: 'active',
-        max_participants: eventForm.max_participants || undefined,
-        registration_deadline: eventForm.registration_deadline || undefined,
-        background_image_url: eventForm.background_image_url || undefined,
-        event_time: eventForm.event_time || undefined,
-        location: eventForm.location || undefined,
-        content: eventForm.content || undefined
-      });
-      setEvents([...events, newEvent]);
-      setShowEventModal(false);
-      setEventForm({
-        title: '',
-        description: '',
-        content: '',
-        event_date: '',
-        event_time: '',
-        location: '',
-        max_participants: 0,
-        registration_deadline: '',
-        background_image_url: '',
-        images: [],
-        category: 'general'
-      });
-      success('Событие создано');
-    } catch (err: any) {
-      showError(err.message || 'Ошибка создания события');
-    }
-  };
-  
-  const handleUpdateEvent = async () => {
-    if (!editingEvent) return;
-    
-    try {
-      await updateEvent(editingEvent.id, eventForm);
-      setEvents(events.map(e => 
-        e.id === editingEvent.id ? { ...e, ...eventForm } : e
-      ));
-      setShowEventModal(false);
-      setEditingEvent(null);
-      success('Событие обновлено');
-    } catch (err: any) {
-      showError(err.message || 'Ошибка обновления события');
-    }
-  };
-  
-  const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
-    if (!confirm(`Удалить событие "${eventTitle}"?`)) return;
-    
-    try {
-      await deleteEvent(eventId);
-      setEvents(events.filter(e => e.id !== eventId));
-      success('Событие удалено');
-    } catch (err: any) {
-      showError(err.message || 'Ошибка удаления события');
-    }
-  };
-  
-  const loadEventParticipants = async (eventId: string) => {
-    try {
-      const participants = await getEventParticipants(eventId);
-      setEventParticipants({ ...eventParticipants, [eventId]: participants });
-    } catch (err) {
-      console.error('Error loading event participants:', err);
-    }
-  };
-  
-  const openEditAchievement = (achievement: Achievement) => {
-    setEditingAchievement(achievement);
-    setAchievementForm({
-      title: achievement.title,
-      description: achievement.description,
-      category: achievement.category,
-      icon: achievement.icon,
-      color: achievement.color
-    });
-    setShowAchievementModal(true);
-  };
-  
-  const openEditNews = (newsItem: News) => {
-    setEditingNews(newsItem);
-    setNewsForm({
-      title: newsItem.title,
-      content: newsItem.content,
-      author: newsItem.author,
-      is_main: newsItem.is_main,
-      background_image_url: newsItem.background_image_url || '',
-      images: Array.isArray(newsItem.images) ? newsItem.images : []
-    });
-    setShowNewsModal(true);
-  };
-  
-  const openEditCadet = (cadet: Cadet) => {
-    setEditingCadet(cadet);
-    setCadetForm({
-      name: cadet.name,
-      email: cadet.email,
-      phone: cadet.phone || '',
-      platoon: cadet.platoon,
-      squad: cadet.squad,
-      password: '', // Пароль не редактируется
-      avatar_url: cadet.avatar_url || ''
-    });
-    setShowCadetModal(true);
-  };
-  
-  const openEditEvent = (event: Event) => {
-    setEditingEvent(event);
-    setEventForm({
-      title: event.title,
-      description: event.description,
-      content: event.content || '',
-      event_date: event.event_date,
-      event_time: event.event_time || '',
-      location: event.location || '',
-      max_participants: event.max_participants || 0,
-      registration_deadline: event.registration_deadline || '',
-      background_image_url: event.background_image_url || '',
-      images: event.images || [],
-      category: event.category
-    });
-    setShowEventModal(true);
-  };
-  
-  const filteredCadets = cadets.filter(cadet => {
-    const matchesSearch = cadet.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPlatoon = filterPlatoon === 'all' || cadet.platoon === filterPlatoon;
-    return matchesSearch && matchesPlatoon;
-  });
 
-  if (!isAdmin) {
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Доступ запрещён</h2>
-          <p className="text-blue-200">У вас нет прав администратора</p>
-        </div>
+        <LoadingSpinner message="Загрузка панели администратора..." size="lg" />
       </div>
     );
   }
@@ -646,720 +288,174 @@ const AdminPage: React.FC = () => {
             variants={fadeInUp}
             initial="hidden"
             animate="visible"
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
             <h1 className="text-6xl md:text-7xl font-display font-black mb-6 text-gradient text-glow">
-              Админ-панель
+              Панель администратора
             </h1>
             <div className="w-32 h-1 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded-full mb-6"></div>
-            <p className="text-2xl text-white/90 max-w-3xl mx-auto text-shadow">
-              Управление системой рейтинга кадетов
+            <p className="text-2xl text-white/90 max-w-3xl mx-auto text-shadow text-balance">
+              Управление кадетами, событиями и достижениями
             </p>
           </motion.div>
 
-          {loading && <LoadingSpinner message="Загрузка данных..." />}
-
-          {!loading && (
-            <>
-              {/* Tabs */}
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-              >
-                <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
-              </motion.div>
-
-              {/* Overview Tab */}
-              {activeTab === 'overview' && analytics && (
-                <div className="space-y-8">
-                  <AdminStats analytics={analytics} />
-                  <AdminQuickActions
-                    onCreateAchievement={() => setShowAchievementModal(true)}
-                    onAwardAchievement={() => setShowAwardModal(true)}
-                    onAddScore={() => setShowScoreModal(true)}
-                    onCreateNews={() => setShowNewsModal(true)}
-                    onCreateCadet={() => setShowCadetModal(true)}
-                    onCreateEvent={() => setShowEventModal(true)}
-                  />
-                </div>
-              )}
-
-              {/* Cadets Tab */}
-              {activeTab === 'cadets' && (
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-8"
-                >
-                  {/* Header */}
-                  <motion.div variants={staggerItem} className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">Кадеты</h2>
-                    <button
-                      onClick={() => setShowCadetModal(true)}
-                      className="btn-primary flex items-center space-x-2"
-                    >
-                      <span>Добавить кадета</span>
-                    </button>
-                  </motion.div>
-
-                  {/* Filters */}
-                  <div className="card-hover p-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="flex-1 relative">
-                        <input
-                          type="text"
-                          placeholder="Поиск кадета..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="input pl-10"
-                        />
-                      </div>
-                      <div className="relative">
-                        <select
-                          value={filterPlatoon}
-                          onChange={(e) => setFilterPlatoon(e.target.value)}
-                          className="input pl-10"
-                        >
-                          <option value="all">Все взводы</option>
-                          {Array.from(new Set(cadets.map(c => c.platoon))).map(platoon => (
-                            <option key={platoon} value={platoon}>{platoon} взвод</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Cadets List */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCadets.map((cadet, index) => (
-                      <motion.div
-                        key={cadet.id}
-                        variants={staggerItem}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        className="card-hover p-6"
-                      >
-                        <div className="flex items-center space-x-4 mb-4">
-                          <img
-                            src={cadet.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
-                            alt={cadet.name}
-                            className="w-16 h-16 rounded-full object-cover border-2 border-blue-400"
-                          />
-                          <div>
-                            <h3 className="text-xl font-bold text-white">{cadet.name}</h3>
-                            <p className="text-blue-300">{cadet.platoon} взвод, {cadet.squad} отделение</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-blue-200">Рейтинг:</span>
-                          <span className="text-2xl font-bold text-yellow-400">#{cadet.rank}</span>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-blue-200">Баллы:</span>
-                          <span className="text-2xl font-bold text-white">{cadet.total_score}</span>
-                        </div>
-                        
-                        <div className="flex space-x-2 mt-4">
-                          <button
-                            onClick={() => openEditCadet(cadet)}
-                            className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            Редактировать
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCadet(cadet.id, cadet.name)}
-                            className="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            Удалить
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Achievements Tab */}
-              {activeTab === 'achievements' && (
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-8"
-                >
-                  <motion.div variants={staggerItem} className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">Достижения</h2>
-                    <button
-                      onClick={() => setShowAchievementModal(true)}
-                      className="btn-primary flex items-center space-x-2"
-                    >
-                      <span>Создать достижение</span>
-                    </button>
-                  </motion.div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {achievements.map((achievement, index) => {
-                      const IconComponent = getIconComponent(achievement.icon);
-                      
-                      return (
-                        <motion.div
-                          key={achievement.id}
-                          variants={staggerItem}
-                          whileHover={{ scale: 1.02, y: -5 }}
-                          className={`card-gradient ${achievement.color} p-6 rounded-2xl relative group`}
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <IconComponent className="h-8 w-8 text-white" />
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => openEditAchievement(achievement)}
-                                className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAchievement(achievement.id)}
-                                className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <h3 className="text-xl font-bold text-white mb-2">{achievement.title}</h3>
-                          <p className="text-white/90 mb-4">{achievement.description}</p>
-                          <span className="text-white/70 text-sm">{achievement.category}</span>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Scores Tab */}
-              {activeTab === 'scores' && (
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-8"
-                >
-                  <motion.div variants={staggerItem} className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">Управление баллами</h2>
-                    <button
-                      onClick={() => setShowScoreModal(true)}
-                      className="btn-primary flex items-center space-x-2"
-                    >
-                      <span>Начислить баллы</span>
-                    </button>
-                  </motion.div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {cadets.map((cadet, index) => (
-                      <motion.div
-                        key={cadet.id}
-                        variants={staggerItem}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        className="card-hover p-6"
-                      >
-                        <div className="flex items-center space-x-4 mb-4">
-                          <img
-                            src={cadet.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
-                            alt={cadet.name}
-                            className="w-16 h-16 rounded-full object-cover border-2 border-blue-400"
-                          />
-                          <div>
-                            <h3 className="text-xl font-bold text-white">{cadet.name}</h3>
-                            <p className="text-blue-300">{cadet.platoon} взвод, {cadet.squad} отделение</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-blue-200">Общий балл:</span>
-                          <span className="text-2xl font-bold text-yellow-400">{cadet.total_score}</span>
-                        </div>
-                        
-                        <button
-                          onClick={() => {
-                            setScoreForm({ ...scoreForm, cadetId: cadet.id });
-                            setShowScoreModal(true);
-                          }}
-                          className="w-full btn-primary"
-                        >
-                          Начислить баллы
-                        </button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-              {/* News Tab */}
-              {activeTab === 'news' && (
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-8"
-                >
-                  <motion.div variants={staggerItem} className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">Новости</h2>
-                    <button
-                      onClick={() => setShowNewsModal(true)}
-                      className="btn-primary flex items-center space-x-2"
-                    >
-                      <span>Создать новость</span>
-                    </button>
-                  </motion.div>
-
-                  <div className="space-y-6">
-                    {news.map((newsItem, index) => (
-                      <motion.div
-                        key={newsItem.id}
-                        variants={staggerItem}
-                        whileHover={{ scale: 1.01, y: -2 }}
-                        className="card-hover p-6 group"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h3 className="text-2xl font-bold text-white">{newsItem.title}</h3>
-                              {newsItem.is_main && (
-                                <span className="bg-yellow-500 text-black px-2 py-1 rounded-full text-xs font-bold">
-                                  ГЛАВНАЯ
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-blue-200 mb-4 line-clamp-2">{newsItem.content}</p>
-                            <div className="flex items-center space-x-4 text-blue-300 text-sm">
-                              <span>Автор: {newsItem.author}</span>
-                              <span>{new Date(newsItem.created_at).toLocaleDateString('ru-RU')}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => openEditNews(newsItem)}
-                              className="p-2 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-colors"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              onClick={() => handleDeleteNews(newsItem.id)}
-                              className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-              {/* Tasks Tab */}
-              {activeTab === 'tasks' && (
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-8"
-                >
-                  <motion.div variants={staggerItem} className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">Задания</h2>
-                    <button
-                      onClick={() => alert('Функция создания заданий будет добавлена позже')}
-                      className="btn-primary flex items-center space-x-2"
-                    >
-                      <span>Создать задание</span>
-                    </button>
-                  </motion.div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {tasks.map((task, index) => (
-                      <motion.div
-                        key={task.id}
-                        variants={staggerItem}
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        className="card-hover p-6"
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-2">
-                            <div className={`px-3 py-2 rounded-full text-sm font-bold ${
-                              task.difficulty === 'easy' ? 'text-green-400 bg-green-400/20' :
-                              task.difficulty === 'medium' ? 'text-yellow-400 bg-yellow-400/20' :
-                              'text-red-400 bg-red-400/20'
-                            }`}>
-                              {task.difficulty === 'easy' ? 'Легко' : task.difficulty === 'medium' ? 'Средне' : 'Сложно'}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-1 text-yellow-400">
-                            <Star className="h-5 w-5" />
-                            <span className="font-bold">{task.points}</span>
-                          </div>
-                        </div>
-
-                        <h3 className="text-xl font-bold text-white mb-2">{task.title}</h3>
-                        <p className="text-blue-200 mb-4 line-clamp-3">{task.description}</p>
-                        
-                        <div className="flex items-center justify-between text-blue-300 text-sm mb-4">
-                          <span>Категория: {
-                            task.category === 'study' ? 'Учёба' :
-                            task.category === 'discipline' ? 'Дисциплина' : 'Мероприятия'
-                          }</span>
-                          <span>До {new Date(task.deadline).toLocaleDateString('ru-RU')}</span>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => alert('Функция редактирования заданий будет добавлена позже')}
-                            className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            Редактировать
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm('Удалить задание?')) {
-                                alert('Функция удаления заданий будет добавлена позже');
-                              }
-                            }}
-                            className="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            Удалить
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-              
-              {/* Events Tab */}
-              {activeTab === 'events' && (
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-8"
-                >
-                  <motion.div variants={staggerItem} className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">События</h2>
-                    <button
-                      onClick={() => setShowEventModal(true)}
-                      className="btn-primary flex items-center space-x-2"
-                    >
-                      <span>Создать событие</span>
-                    </button>
-                  </motion.div>
-
-                  <div className="space-y-6">
-                    {events.map((event) => (
-                      <motion.div
-                        key={event.id}
-                        variants={staggerItem}
-                        whileHover={{ scale: 1.01, y: -2 }}
-                        className="card-hover p-6 group"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h3 className="text-2xl font-bold text-white">{event.title}</h3>
-                              <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                                event.status === 'active' ? 'bg-green-500/20 text-green-300' :
-                                event.status === 'completed' ? 'bg-blue-500/20 text-blue-300' :
-                                'bg-red-500/20 text-red-300'
-                              }`}>
-                                {event.status === 'active' ? 'Активно' :
-                                 event.status === 'completed' ? 'Завершено' : 'Отменено'}
-                              </span>
-                            </div>
-                            <p className="text-blue-200 mb-4 line-clamp-2">{event.description}</p>
-                            <div className="flex items-center space-x-6 text-blue-300 text-sm">
-                              <span>Дата: {new Date(event.event_date).toLocaleDateString('ru-RU')}</span>
-                              <span>Участников: {event.participants_count}</span>
-                              {event.location && <span>Место: {event.location}</span>}
-                            </div>
-                          </div>
-                          
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => {
-                                loadEventParticipants(event.id);
-                                // Здесь можно открыть модал с участниками
-                              }}
-                              className="p-2 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-colors"
-                            >
-                              👥
-                            </button>
-                            <button
-                              onClick={() => openEditEvent(event)}
-                              className="p-2 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-colors"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              onClick={() => handleDeleteEvent(event.id, event.title)}
-                              className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </>
-          )}
-
-          {/* Achievement Modal */}
-          <AchievementModal
-            isOpen={showAchievementModal}
-            onClose={() => {
-              setShowAchievementModal(false);
-              setEditingAchievement(null);
-            }}
-            onSubmit={editingAchievement ? handleUpdateAchievement : handleCreateAchievement}
-            form={achievementForm}
-            setForm={setAchievementForm}
-            isEditing={!!editingAchievement}
+          {/* Quick Actions */}
+          <AdminQuickActions
+            onCreateAchievement={() => setAchievementModal({ isOpen: true, isEditing: false, achievement: null })}
+            onAwardAchievement={() => {}}
+            onAddScore={() => setScoreModal({ isOpen: true })}
+            onCreateNews={() => {}}
+            onCreateCadet={() => setCadetModal({ isOpen: true, isEditing: false, cadet: null })}
+            onCreateEvent={() => setEventModal({ isOpen: true, isEditing: false, event: null })}
           />
 
-          {/* Award Achievement Modal */}
-          {showAwardModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => setShowAwardModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="glass-effect rounded-3xl max-w-2xl w-full p-8"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h2 className="text-3xl font-bold text-white mb-6">Присудить достижение</h2>
-                
+          {/* Stats */}
+          {analytics && <AdminStats analytics={analytics} />}
+
+          {/* Tabs */}
+          <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+          {/* Tab Content */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-8"
+          >
+            {activeTab === 'events' && (
+              <motion.div variants={staggerItem} className="card-hover p-8">
+                <h2 className="text-3xl font-bold text-white mb-6">Управление событиями</h2>
                 <div className="space-y-6">
-                  <div>
-                    <label className="block text-white font-bold mb-2">Кадет</label>
-                    <select
-                      value={selectedCadetForAward}
-                      onChange={(e) => setSelectedCadetForAward(e.target.value)}
-                      className="input"
-                    >
-                      <option value="">Выберите кадета</option>
-                      {cadets.map(cadet => (
-                        <option key={cadet.id} value={cadet.id}>
-                          {cadet.name} ({cadet.platoon} взвод)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-white font-bold mb-2">Достижение</label>
-                    <select
-                      value={selectedAchievementForAward}
-                      onChange={(e) => setSelectedAchievementForAward(e.target.value)}
-                      className="input"
-                    >
-                      <option value="">Выберите достижение</option>
-                      {achievements.map(achievement => (
-                        <option key={achievement.id} value={achievement.id}>
-                          {achievement.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-4 mt-8">
-                  <button
-                    onClick={handleAwardAchievement}
-                    disabled={!selectedCadetForAward || !selectedAchievementForAward}
-                    className="flex-1 btn-primary disabled:opacity-50"
-                  >
-                    Присудить
-                  </button>
-                  <button
-                    onClick={() => setShowAwardModal(false)}
-                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition-colors"
-                  >
-                    Отмена
-                  </button>
+                  {events.map((event) => (
+                    <div key={event.id} className="glass-effect p-6 rounded-2xl">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
+                          <p className="text-blue-200 mb-2">{event.description}</p>
+                          <div className="flex items-center space-x-4 text-blue-300 text-sm">
+                            <span>📅 {new Date(event.event_date).toLocaleDateString('ru-RU')}</span>
+                            <span>👥 {event.participants_count} участников</span>
+                            <span>📍 {event.location}</span>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              // Показать участников
+                              const participants = eventParticipants[event.id] || [];
+                              alert(`Участники события "${event.title}":\n\n${
+                                participants.length > 0 
+                                  ? participants.map(p => `• ${p.cadet?.name} (${p.cadet?.platoon} взвод)`).join('\n')
+                                  : 'Пока нет участников'
+                              }`);
+                            }}
+                            className="btn-icon text-blue-400 hover:text-blue-300"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button className="btn-icon text-yellow-400 hover:text-yellow-300">
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button className="btn-icon text-red-400 hover:text-red-300">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Список участников */}
+                      {eventParticipants[event.id] && eventParticipants[event.id].length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-white/20">
+                          <h4 className="text-white font-semibold mb-2">Участники ({eventParticipants[event.id].length}):</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {eventParticipants[event.id].map((participant) => (
+                              <div key={participant.id} className="flex items-center space-x-2 text-blue-200 text-sm">
+                                <span>•</span>
+                                <span>{participant.cadet?.name}</span>
+                                <span className="text-blue-400">({participant.cadet?.platoon})</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </motion.div>
-            </motion.div>
-          )}
+            )}
 
-          {/* Score Modal */}
+            {activeTab === 'cadets' && (
+              <motion.div variants={staggerItem} className="card-hover p-8">
+                <h2 className="text-3xl font-bold text-white mb-6">Управление кадетами</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {cadets.map((cadet) => (
+                    <div key={cadet.id} className="glass-effect p-6 rounded-2xl">
+                      <div className="flex items-center space-x-4 mb-4">
+                        <img
+                          src={cadet.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
+                          alt={cadet.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                        <div>
+                          <h3 className="text-white font-bold">{cadet.name}</h3>
+                          <p className="text-blue-300 text-sm">{cadet.platoon} взвод, {cadet.squad} отделение</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-yellow-400 font-bold">{cadet.total_score} баллов</span>
+                        <div className="flex space-x-2">
+                          <button className="btn-icon text-yellow-400 hover:text-yellow-300">
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button className="btn-icon text-red-400 hover:text-red-300">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Modals */}
+          <AchievementModal
+            isOpen={achievementModal.isOpen}
+            onClose={() => setAchievementModal({ isOpen: false, isEditing: false, achievement: null })}
+            onSubmit={handleCreateAchievement}
+            form={achievementForm}
+            setForm={setAchievementForm}
+            isEditing={achievementModal.isEditing}
+          />
+
+          <CadetModal
+            isOpen={cadetModal.isOpen}
+            onClose={() => setCadetModal({ isOpen: false, isEditing: false, cadet: null })}
+            onSubmit={handleCreateCadet}
+            form={cadetForm}
+            setForm={setCadetForm}
+            isEditing={cadetModal.isEditing}
+            loading={false}
+          />
+
+          <EventModal
+            isOpen={eventModal.isOpen}
+            onClose={() => setEventModal({ isOpen: false, isEditing: false, event: null })}
+            onSubmit={handleCreateEvent}
+            form={eventForm}
+            setForm={setEventForm}
+            isEditing={eventModal.isEditing}
+          />
+
           <ScoreModal
-            isOpen={showScoreModal}
-            onClose={() => setShowScoreModal(false)}
+            isOpen={scoreModal.isOpen}
+            onClose={() => setScoreModal({ isOpen: false })}
             onSubmit={handleAddScore}
             form={scoreForm}
             setForm={setScoreForm}
             cadets={cadets}
           />
-
-          {/* News Modal */}
-          {showNewsModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => {
-                setShowNewsModal(false);
-                setEditingNews(null);
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="glass-effect rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h2 className="text-3xl font-bold text-white mb-6">
-                  {editingNews ? 'Редактировать новость' : 'Создать новость'}
-                </h2>
-                
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-white font-bold mb-2">Заголовок</label>
-                    <input
-                      type="text"
-                      value={newsForm.title}
-                      onChange={(e) => setNewsForm({...newsForm, title: e.target.value})}
-                      className="input"
-                      placeholder="Заголовок новости"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-white font-bold mb-2">Содержание</label>
-                    <textarea
-                      value={newsForm.content}
-                      onChange={(e) => setNewsForm({...newsForm, content: e.target.value})}
-                      className="input resize-none"
-                      rows={6}
-                      placeholder="Содержание новости"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-white font-bold mb-2">Автор</label>
-                      <input
-                        type="text"
-                        value={newsForm.author}
-                        onChange={(e) => setNewsForm({...newsForm, author: e.target.value})}
-                        className="input"
-                        placeholder="Автор новости"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-white font-bold mb-2">URL фонового изображения</label>
-                      <input
-                        type="url"
-                        value={newsForm.background_image_url}
-                        onChange={(e) => setNewsForm({...newsForm, background_image_url: e.target.value})}
-                        className="input"
-                        placeholder="https://images.pexels.com/..."
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      id="is_main"
-                      checked={newsForm.is_main}
-                      onChange={(e) => setNewsForm({...newsForm, is_main: e.target.checked})}
-                      className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="is_main" className="text-white font-bold">
-                      Главная новость
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-4 mt-8">
-                  <button
-                    onClick={editingNews ? handleUpdateNews : handleCreateNews}
-                    disabled={!newsForm.title || !newsForm.content || !newsForm.author}
-                    className="flex-1 btn-primary disabled:opacity-50"
-                  >
-                    {editingNews ? 'Обновить' : 'Создать'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowNewsModal(false);
-                      setEditingNews(null);
-                    }}
-                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition-colors"
-                  >
-                    Отмена
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Cadet Modal */}
-          <CadetModal
-            isOpen={showCadetModal}
-            onClose={() => {
-              setShowCadetModal(false);
-              setEditingCadet(null);
-              setCadetForm({
-                name: '',
-                email: '',
-                phone: '',
-                platoon: '',
-                squad: 0,
-                password: '',
-                avatar_url: ''
-              });
-            }}
-            onSubmit={editingCadet ? handleUpdateCadet : handleCreateCadet}
-            form={cadetForm}
-            setForm={setCadetForm}
-            isEditing={!!editingCadet}
-            loading={cadetModalLoading}
-          />
         </div>
-        
-        {/* Event Modal */}
-        <EventModal
-          isOpen={showEventModal}
-          onClose={() => {
-            setShowEventModal(false);
-            setEditingEvent(null);
-            setEventForm({
-              title: '',
-              description: '',
-              content: '',
-              event_date: '',
-              event_time: '',
-              location: '',
-              max_participants: 0,
-              registration_deadline: '',
-              background_image_url: '',
-              images: [],
-              category: 'general'
-            });
-          }}
-          onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
-          form={eventForm}
-          setForm={setEventForm}
-          isEditing={!!editingEvent}
-        />
       </div>
     </motion.div>
   );
