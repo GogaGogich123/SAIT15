@@ -90,8 +90,6 @@ export const getCadetEventParticipations = async (cadetId: string): Promise<Even
 };
 
 export const registerForEvent = async (eventId: string, cadetId: string, notes?: string): Promise<void> => {
-  console.log('Attempting to register for event:', { eventId, cadetId, notes });
-  
   const { error } = await supabase
     .from('event_participants')
     .insert([{
@@ -100,34 +98,20 @@ export const registerForEvent = async (eventId: string, cadetId: string, notes?:
       notes: notes || null
     }]);
   
-  if (error) {
-    console.error('Registration error:', error);
-    throw error;
-  }
-  
-  console.log('Registration successful in database');
+  if (error) throw error;
 };
 
 export const cancelEventRegistration = async (eventId: string, cadetId: string): Promise<void> => {
-  console.log('Attempting to cancel registration:', { eventId, cadetId });
-  
   const { error } = await supabase
     .from('event_participants')
     .delete()
     .eq('event_id', eventId)
     .eq('cadet_id', cadetId);
   
-  if (error) {
-    console.error('Cancel registration error:', error);
-    throw error;
-  }
-  
-  console.log('Registration canceled successfully in database');
+  if (error) throw error;
 };
 
 export const isRegisteredForEvent = async (eventId: string, cadetId: string): Promise<boolean> => {
-  console.log('Checking registration status:', { eventId, cadetId });
-  
   const { data, error } = await supabase
     .from('event_participants')
     .select('id')
@@ -135,14 +119,8 @@ export const isRegisteredForEvent = async (eventId: string, cadetId: string): Pr
     .eq('cadet_id', cadetId)
     .maybeSingle();
   
-  if (error) {
-    console.error('Check registration error:', error);
-    throw error;
-  }
-  
-  const isRegistered = !!data;
-  console.log('Registration status:', isRegistered);
-  return isRegistered;
+  if (error) throw error;
+  return !!data;
 };
 
 // Admin functions
