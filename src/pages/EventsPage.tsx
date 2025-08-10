@@ -75,7 +75,6 @@ const EventsPage: React.FC = () => {
     }
 
     try {
-      console.log('Registering for event:', { eventId, cadetId: user.cadetId });
       await registerForEvent(eventId, user.cadetId);
       setRegistrations({ ...registrations, [eventId]: true });
       setEvents(events.map(event => 
@@ -84,7 +83,6 @@ const EventsPage: React.FC = () => {
           : event
       ));
       success('Вы успешно зарегистрированы на событие!');
-      console.log('Registration successful');
     } catch (err) {
       console.error('Error registering for event:', err);
       showError('Ошибка регистрации на событие');
@@ -95,7 +93,6 @@ const EventsPage: React.FC = () => {
     if (!user?.cadetId) return;
 
     try {
-      console.log('Canceling registration:', { eventId, cadetId: user.cadetId });
       await cancelEventRegistration(eventId, user.cadetId);
       setRegistrations({ ...registrations, [eventId]: false });
       setEvents(events.map(event => 
@@ -104,7 +101,6 @@ const EventsPage: React.FC = () => {
           : event
       ));
       success('Регистрация отменена');
-      console.log('Registration canceled successfully');
     } catch (err) {
       console.error('Error canceling registration:', err);
       showError('Ошибка отмены регистрации');
