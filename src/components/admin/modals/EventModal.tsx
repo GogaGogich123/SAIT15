@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Save, X, Calendar, MapPin, Users, Clock, Image } from 'lucide-react';
+import { getEventParticipants, type EventParticipant } from '../../../lib/events';
+import { useState, useEffect } from 'react';
 
 interface EventForm {
   title: string;
@@ -23,6 +25,8 @@ interface EventModalProps {
   form: EventForm;
   setForm: (form: EventForm) => void;
   isEditing: boolean;
+  selectedEventId?: string;
+  viewMode?: 'edit' | 'participants';
 }
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -31,8 +35,35 @@ const EventModal: React.FC<EventModalProps> = ({
   onSubmit,
   form,
   setForm,
-  isEditing
+  isEditing,
+  selectedEventId,
+  viewMode = 'edit'
 }) => {
+  const [eventParticipants, setEventParticipants] = useState<EventParticipant[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'participants'>('details');
+
+  useEffect(() => {
+    if (isOpen && selectedEventId && (viewMode === 'participants' || isEditing)) {
+      setActiveTab(viewMode === 'participants' ? 'participants' : 'details');
+      fetchEventParticipants();
+    }
+  }, [isOpen, selectedEventId, viewMode]);
+
+  const fetchEventParticipants = async () => {
+    if (!selectedEventId) return;
+    
+    try {
+      setLoadingParticipants(true);
+      const participants = await getEventParticipants(selectedEventId);
+      setEventParticipants(participants);
+    } catch (error) {
+      console.error('Error fetching event participants:', error);
+    } finally {
+      setLoadingParticipants(false);
+    }
+  };
+
   const categoryOptions = [
     { value: 'general', label: 'Общее' },
     { value: 'sport', label: 'Спорт' },
@@ -70,10 +101,132 @@ const EventModal: React.FC<EventModalProps> = ({
         <div className="flex items-center space-x-3 mb-6">
           <Calendar className="h-8 w-8 text-blue-400" />
           <h2 className="text-3xl font-bold text-white">
-            {isEditing ? 'Редактировать событие' : 'Создать событие'}
+            {viewMode === 'participants' ? 'Участники события' : 
+             isEditing ? 'Редактировать событие' : 'Создать событие'}
           </h2>
         </div>
         
+        {/* Tabs for editing mode */}
+        {isEditing && (
+          <div className="flex space-x-4 mb-8">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
+                activeTab === 'details'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                  : 'bg-white/10 text-white/70 hover:bg-white/20'
+              }`}
+            >
+              Детали события
+            </button>
+            <button
+              onClick={() => setActiveTab('participants')}
+              className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
+                activeTab === 'participants'
+                  ? 'bg-gradient-to-r from-green-600 to-green-700 text-white'
+                  : 'bg-white/10 text-white/70 hover:bg-white/20'
+              }`}
+            >
+              Участники ({eventParticipants.length})
+            </button>
+          </div>
+        )}
+
+        {/* Participants Tab */}
+        {(viewMode === 'participants' || activeTab === 'participants') && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-white">
+                Зарегистрированные участники
+              </h3>
+              <div className="text-blue-300 font-semibold">
+                Всего: {eventParticipants.length}
+              </div>
+            </div>
+
+            {loadingParticipants ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                <p className="text-blue-300">Загрузка участников...</p>
+              </div>
+            ) : eventParticipants.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-16 w-16 text-blue-400 mx-auto mb-4 opacity-50" />
+                <p className="text-blue-300 text-lg">Пока никто не зарегистрировался</p>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {eventParticipants.map((participant, index) => (
+                  <div
+                    key={participant.id}
+                    className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-bold text-white">
+                            {participant.cadet?.name}
+                          </h4>
+                          <p className="text-blue-300">
+                            {participant.cadet?.platoon} взвод, {participant.cadet?.squad} отделение
+                          </p>
+                          {participant.cadet?.email && (
+                            <p className="text-blue-400 text-sm">
+                              {participant.cadet.email}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+                          participant.status === 'confirmed' ? 'bg-green-500/20 text-green-300' :
+                          participant.status === 'cancelled' ? 'bg-red-500/20 text-red-300' :
+                          'bg-blue-500/20 text-blue-300'
+                        }`}>
+                          {participant.status === 'registered' ? 'Зарегистрирован' :
+                           participant.status === 'confirmed' ? 'Подтвержден' :
+                           participant.status === 'cancelled' ? 'Отменен' : participant.status}
+                        </div>
+                        <p className="text-blue-400 text-sm mt-2">
+                          {new Date(participant.registration_date).toLocaleDateString('ru-RU', {
+                            day: 'numeric',
+                            month: 'long',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    {participant.notes && (
+                      <div className="mt-4 pt-4 border-t border-white/10">
+                        <p className="text-blue-200 text-sm">
+                          <strong>Заметки:</strong> {participant.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {viewMode === 'participants' && (
+              <div className="flex justify-end mt-8">
+                <button
+                  onClick={onClose}
+                  className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition-colors"
+                >
+                  Закрыть
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Event Details Tab */}
+        {(viewMode === 'edit' || activeTab === 'details') && (
         <div className="space-y-6">
           {/* Основная информация */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -291,8 +444,10 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
           )}
         </div>
+        )}
         
-        <div className="flex space-x-4 mt-8">
+        {(viewMode === 'edit' || activeTab === 'details') && (
+          <div className="flex space-x-4 mt-8">
           <button
             onClick={onSubmit}
             disabled={!form.title || !form.description || !form.event_date}
@@ -309,6 +464,8 @@ const EventModal: React.FC<EventModalProps> = ({
             <span>Отмена</span>
           </button>
         </div>
+        )}
+        
       </motion.div>
     </motion.div>
   );

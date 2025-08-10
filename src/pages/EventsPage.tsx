@@ -74,6 +74,19 @@ const EventsPage: React.FC = () => {
       return;
     }
 
+    // Проверяем, не зарегистрирован ли уже кадет на это мероприятие
+    try {
+      const alreadyRegistered = await isRegisteredForEvent(eventId, user.cadetId);
+      if (alreadyRegistered) {
+        showError('Вы уже зарегистрированы на это событие');
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking registration status:', err);
+      showError('Ошибка проверки статуса регистрации');
+      return;
+    }
+
     try {
       await registerForEvent(eventId, user.cadetId);
       setRegistrations({ ...registrations, [eventId]: true });
