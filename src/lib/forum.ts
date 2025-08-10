@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { sql } from '@supabase/postgrest-js';
 
 // Types
 export interface ForumCategory {
@@ -158,7 +159,7 @@ export const incrementTopicViews = async (topicId: string): Promise<void> => {
   const { error } = await supabase
     .from('forum_topics')
     .update({ 
-      views_count: supabase.raw('views_count + 1')
+      views_count: sql`views_count + 1`
     })
     .eq('id', topicId);
   
