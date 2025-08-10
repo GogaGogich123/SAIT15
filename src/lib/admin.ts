@@ -139,22 +139,3 @@ export const getCadetsStats = async () => {
     throw error;
   }
 };
-// Управление баллами кадетов через Edge Function
-export const manageCadetScores = async (cadetId: string, category: 'study' | 'discipline' | 'events', points: number, description: string) => {
-  try {
-    console.log('Managing cadet scores via Edge Function', { cadetId, category, points, description });
-    
-    const result = await callEdgeFunction('manage-scores', {
-      cadetId,
-      category,
-      points,
-      description
-    });
-    
-    console.log('Scores managed successfully via Edge Function');
-    return result;
-  } catch (error) {
-    console.error('Manage scores via Edge Function failed', error);
-    throw error;
-  }
-};

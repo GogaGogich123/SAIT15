@@ -430,6 +430,79 @@ export const awardAchievement = async (cadetId: string, achievementId: string, a
   if (error) throw error;
 };
 
+// Score management functions
+export const addScoreHistory = async (scoreData: Omit<ScoreHistory, 'id' | 'created_at'>): Promise<void> => {
+  const { error } = await supabase
+    .from('score_history')
+    .insert([{
+      cadet_id: scoreData.cadet_id,
+      category: scoreData.category,
+      points: scoreData.points,
+      description: scoreData.description,
+    }]);
+  
+  if (error) throw error;
+};
+
+export const updateCadetScores = async (cadetId: string, category: 'study' | 'discipline' | 'events', points: number): Promise<void> => {
+  // Получаем текущие баллы
+  const { data: currentScores, error: fetchError } = await supabase
+    .from('scores')
+    .select('*')
+    .eq('cadet_id', cadetId)
+    .maybeSingle();
+  
+  if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+  
+  const newScores = {
+    study_score: currentScores?.study_score || 0,
+    discipline_score: currentScores?.discipline_score || 0,
+    events_score: currentScores?.events_score || 0
+  };
+  
+  // Правильно обновляем баллы по категории
+  if (category === 'study') {
+    newScores.study_score = Math.max(0, newScores.study_score + points);
+  } else if (category === 'discipline') {
+    newScores.discipline_score = Math.max(0, newScores.discipline_score + points);
+  } else if (category === 'events') {
+    newScores.events_score = Math.max(0, newScores.events_score + points);
+  }
+  
+  const totalScore = newScores.study_score + newScores.discipline_score + newScores.events_score;
+  
+  if (currentScores) {
+    // Обновляем существующие баллы
+    const { error } = await supabase
+      .from('scores')
+      .update(newScores)
+      .eq('cadet_id', cadetId);
+    
+    if (error) throw error;
+  } else {
+    // Создаем новые баллы
+    const { error } = await supabase
+      .from('scores')
+      .insert([{ cadet_id: cadetId, ...newScores }]);
+    
+    if (error) throw error;
+  }
+  
+  // Обновляем общий счет кадета
+  const { error: updateCadetError } = await supabase
+    .from('cadets')
+    .update({ 
+      total_score: totalScore,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', cadetId);
+  
+  if (updateCadetError) throw updateCadetError;
+  
+  // Очищаем кэш кадетов после обновления баллов
+  cache.delete(CACHE_KEYS.CADETS);
+  cache.delete(`${CACHE_KEYS.CADETS}_${cadetId}`);
+};
 
 // Analytics functions
 export const getAnalytics = async () => {
