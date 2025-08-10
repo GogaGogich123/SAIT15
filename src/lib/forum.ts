@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { sql } from '@supabase/supabase-js';
 
 // Types
 export interface ForumCategory {
@@ -158,9 +157,7 @@ export const incrementTopicViews = async (topicId: string): Promise<void> => {
   // Увеличиваем счетчик просмотров
   const { error } = await supabase
     .from('forum_topics')
-    .update({ 
-      views_count: sql`views_count + 1`
-    })
+    .update({ views_count: supabase.increment(1) })
     .eq('id', topicId);
   
   if (error) throw error;
