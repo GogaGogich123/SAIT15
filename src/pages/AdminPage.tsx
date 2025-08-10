@@ -54,7 +54,8 @@ import {
 import { 
   createCadetWithAuth, 
   updateCadetData, 
-  deleteCadet 
+  deleteCadet,
+  manageCadetScores
 } from '../lib/admin';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
@@ -388,14 +389,12 @@ const AdminPage: React.FC = () => {
 
   const handleSubmitScore = async () => {
     try {
-      await addScoreHistory({
-        cadet_id: scoreForm.cadetId,
-        category: scoreForm.category,
-        points: scoreForm.points,
-        description: scoreForm.description
-      });
-      
-      await updateCadetScores(scoreForm.cadetId, scoreForm.category, scoreForm.points);
+      await manageCadetScores(
+        scoreForm.cadetId,
+        scoreForm.category,
+        scoreForm.points,
+        scoreForm.description
+      );
       
       // Refresh cadets data
       const updatedCadets = await getCadets();
