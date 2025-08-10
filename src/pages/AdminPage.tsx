@@ -25,6 +25,7 @@ import AchievementModal from '../components/admin/modals/AchievementModal';
 import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
 import ScoreModal from '../components/admin/modals/ScoreModal';
+import AdminResetMenu from '../components/admin/AdminResetMenu';
 import { 
   getCadets, 
   getAchievements, 
@@ -517,7 +518,8 @@ const AdminPage: React.FC = () => {
           {!loading && (
             <>
               {/* Quick Actions */}
-              <AdminQuickActions
+              <div className="mb-12">
+                <AdminQuickActions
                 onCreateAchievement={handleCreateAchievement}
                 onAwardAchievement={handleAwardAchievement}
                 onAddScore={handleAddScore}
@@ -525,6 +527,7 @@ const AdminPage: React.FC = () => {
                 onCreateCadet={handleCreateCadet}
                 onCreateEvent={handleCreateEvent}
               />
+              </div>
 
               {/* Tabs */}
               <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />
@@ -752,6 +755,10 @@ const AdminPage: React.FC = () => {
                     ))}
                   </div>
                 </motion.div>
+              )}
+
+              {activeTab === 'data-management' && (
+                <AdminResetMenu />
               )}
             </>
           )}
