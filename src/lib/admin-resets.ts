@@ -122,3 +122,29 @@ export const fullReset = async () => {
     throw error;
   }
 };
+
+// Сброс всех кадетов
+export const resetCadets = async () => {
+  try {
+    console.log('Resetting all cadets...');
+    const result = await callEdgeFunction('reset-cadets');
+    console.log('All cadets reset successfully');
+    return result;
+  } catch (error) {
+    console.error('Reset cadets failed', error);
+    throw error;
+  }
+};
+
+// Сброс кадетов по взводу
+export const resetCadetsByPlatoon = async (platoon: string) => {
+  try {
+    console.log('Resetting cadets by platoon...', platoon);
+    const result = await callEdgeFunction('reset-cadets-by-platoon', { platoon });
+    console.log('Cadets by platoon reset successfully');
+    return result;
+  } catch (error) {
+    console.error('Reset cadets by platoon failed', error);
+    throw error;
+  }
+};

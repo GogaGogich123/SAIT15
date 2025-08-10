@@ -11,7 +11,9 @@ import {
   CheckSquare, 
   MessageSquare,
   RefreshCw,
-  Shield
+  Shield,
+  Users,
+  UserX
 } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { 
@@ -21,13 +23,18 @@ import {
   resetEvents, 
   resetTasks, 
   resetForum, 
-  fullReset 
+  fullReset,
+  resetCadets,
+  resetCadetsByPlatoon
 } from '../../lib/admin-resets';
 import { staggerContainer, staggerItem } from '../../utils/animations';
 
 const AdminResetMenu: React.FC = () => {
   const { success, error: showError } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
+  const [selectedPlatoon, setSelectedPlatoon] = useState<string>('');
+
+  const platoons = ['7-1', '7-2', '8-1', '8-2', '9-1', '9-2', '10-1', '10-2', '11-1', '11-2'];
 
   const handleResetScores = async () => {
     if (!window.confirm('Вы уверены, что хотите сбросить ВСЕ баллы кадетов? Это действие нельзя отменить!')) {
@@ -137,6 +144,56 @@ const AdminResetMenu: React.FC = () => {
     }
   };
 
+  const handleResetCadets = async () => {
+    if (!window.confirm('⚠️ ВНИМАНИЕ! Вы собираетесь удалить ВСЕХ кадетов и их учетные записи. Это действие НЕЛЬЗЯ ОТМЕНИТЬ!')) {
+      return;
+    }
+
+    const confirmation = window.prompt(
+      'Для подтверждения удаления всех кадетов введите "УДАЛИТЬ КАДЕТОВ" (заглавными буквами):'
+    );
+
+    if (confirmation !== 'УДАЛИТЬ КАДЕТОВ') {
+      showError('Неверное подтверждение. Операция отменена.');
+      return;
+    }
+
+    try {
+      setLoading('cadets');
+      await resetCadets();
+      success('Все кадеты успешно удалены');
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (error) {
+      console.error('Error resetting cadets:', error);
+      showError('Ошибка удаления кадетов');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleResetCadetsByPlatoon = async () => {
+    if (!selectedPlatoon) {
+      showError('Выберите взвод для удаления');
+      return;
+    }
+
+    if (!window.confirm(`Вы уверены, что хотите удалить ВСЕХ кадетов из ${selectedPlatoon} взвода? Это действие нельзя отменить!`)) {
+      return;
+    }
+
+    try {
+      setLoading('platoon');
+      await resetCadetsByPlatoon(selectedPlatoon);
+      success(`Все кадеты из ${selectedPlatoon} взвода успешно удалены`);
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (error) {
+      console.error('Error resetting cadets by platoon:', error);
+      showError('Ошибка удаления кадетов взвода');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const handleFullReset = async () => {
     if (!window.confirm('⚠️ ВНИМАНИЕ! Вы собираетесь ПОЛНОСТЬЮ ОЧИСТИТЬ ВСЕ ДАННЫЕ системы, включая всех кадетов, пользователей, баллы, достижения, новости, события, задания и форум. Это действие НЕЛЬЗЯ ОТМЕНИТЬ!')) {
       return;
@@ -241,6 +298,84 @@ const AdminResetMenu: React.FC = () => {
             ⚠️ Внимание! Все операции сброса данных являются необратимыми. 
             Убедитесь, что у вас есть резервная копия данных перед выполнением любых операций.
           </p>
+        </div>
+      </motion.div>
+
+      {/* Cadet Management Section */}
+      <motion.div variants={staggerItem}>
+        <h3 className="text-2xl font-bold text-white mb-6">Управление кадетами</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Reset All Cadets */}
+          <motion.div
+            variants={staggerItem}
+            whileHover={{ scale: 1.05, y: -5 }}
+            className="card-gradient from-red-700 to-red-900 p-6 border border-white/20 hover:border-white/40 transition-all duration-300"
+          >
+            <div className="flex items-center space-x-3 mb-4">
+              <UserX className="h-8 w-8 text-white" />
+              <h4 className="text-xl font-bold text-white">Удалить всех кадетов</h4>
+            </div>
+            <p className="text-white/90 mb-6 text-sm">
+              Удалить всех кадетов и их учетные записи из системы
+            </p>
+            <button
+              onClick={handleResetCadets}
+              disabled={loading === 'cadets'}
+              className="w-full bg-white/20 hover:bg-white/30 disabled:bg-white/10 text-white px-4 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
+            >
+              {loading === 'cadets' ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <>
+                  <Trash2 className="h-5 w-5" />
+                  <span>Удалить всех</span>
+                </>
+              )}
+            </button>
+          </motion.div>
+
+          {/* Reset Cadets by Platoon */}
+          <motion.div
+            variants={staggerItem}
+            whileHover={{ scale: 1.05, y: -5 }}
+            className="card-gradient from-orange-600 to-orange-800 p-6 border border-white/20 hover:border-white/40 transition-all duration-300"
+          >
+            <div className="flex items-center space-x-3 mb-4">
+              <Users className="h-8 w-8 text-white" />
+              <h4 className="text-xl font-bold text-white">Удалить взвод</h4>
+            </div>
+            <p className="text-white/90 mb-4 text-sm">
+              Удалить всех кадетов из выбранного взвода
+            </p>
+            <div className="space-y-4">
+              <select
+                value={selectedPlatoon}
+                onChange={(e) => setSelectedPlatoon(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white"
+              >
+                <option value="">Выберите взвод</option>
+                {platoons.map(platoon => (
+                  <option key={platoon} value={platoon} className="bg-gray-800">
+                    {platoon} взвод
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleResetCadetsByPlatoon}
+                disabled={loading === 'platoon' || !selectedPlatoon}
+                className="w-full bg-white/20 hover:bg-white/30 disabled:bg-white/10 text-white px-4 py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
+              >
+                {loading === 'platoon' ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <>
+                    <Trash2 className="h-5 w-5" />
+                    <span>Удалить взвод</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
 
