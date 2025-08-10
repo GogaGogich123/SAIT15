@@ -125,25 +125,22 @@ export const isRegisteredForEvent = async (eventId: string, cadetId: string): Pr
 
 // Admin functions
 export const createEvent = async (eventData: Omit<Event, 'id' | 'participants_count' | 'created_at' | 'updated_at'>): Promise<Event> => {
-  // Подготавливаем данные для создания
-  const createData = {
-    title: eventData.title,
-    description: eventData.description,
-    content: eventData.content || null,
-    event_date: eventData.event_date,
-    event_time: eventData.event_time || null,
-    location: eventData.location || null,
-    max_participants: eventData.max_participants || null,
-    registration_deadline: eventData.registration_deadline || null,
-    images: eventData.images || [],
-    background_image_url: eventData.background_image_url || null,
-    category: eventData.category,
-    status: eventData.status || 'active'
-  };
-  
   const { data, error } = await supabase
     .from('events')
-    .insert([createData])
+    .insert([{
+      title: eventData.title,
+      description: eventData.description,
+      content: eventData.content,
+      event_date: eventData.event_date,
+      event_time: eventData.event_time,
+      location: eventData.location,
+      max_participants: eventData.max_participants,
+      registration_deadline: eventData.registration_deadline,
+      images: eventData.images || [],
+      background_image_url: eventData.background_image_url,
+      category: eventData.category,
+      status: eventData.status
+    }])
     .select()
     .single();
   
