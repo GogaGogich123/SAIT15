@@ -103,7 +103,7 @@ const Header: React.FC = () => {
                 
                 {user.role === 'cadet' && (
                   <Link
-                    to={`/cadet/${user.id}`}
+                    to={`/cadet/${user.cadetId}`}
                     className="nav-link-inactive"
                   >
                     <User className="h-4 w-4" />
