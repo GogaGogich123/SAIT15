@@ -10,20 +10,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const { error: showError, success: showSuccess } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await signIn(email, password);
-      showToast('Welcome back!', 'success');
-      navigate('/');
+      const success = await login(email, password);
+      if (success) {
+        showSuccess('Welcome back!', 'Successfully signed in');
+        navigate('/');
+      } else {
+        showError('Login failed', 'Invalid email or password');
+      }
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Login failed', 'error');
+      showError('Login failed', error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
