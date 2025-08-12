@@ -5,7 +5,7 @@ import { Input } from '../ui';
 import Card from '../ui/Card';
 import { Badge } from '../ui';
 import { Search, Plus, Edit, Trash2, Award, Users } from 'lucide-react';
-import { ScoreModal } from './modals/ScoreModal';
+import ScoreModal from './modals/ScoreModal';
 import { useToast } from '../../hooks/useToast';
 
 interface Cadet {

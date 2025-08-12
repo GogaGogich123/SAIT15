@@ -21,7 +21,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import AdminTabs from '../components/admin/AdminTabs';
 import AdminStats from '../components/admin/AdminStats';
 import AdminQuickActions from '../components/admin/AdminQuickActions';
-import ScoreManagement from '../components/admin/ScoreManagement';
+import { ScoreManagement } from '../components/admin/ScoreManagement';
 import AdminManagement from '../components/admin/AdminManagement';
 import AchievementModal from '../components/admin/modals/AchievementModal';
 import CadetModal from '../components/admin/modals/CadetModal';
