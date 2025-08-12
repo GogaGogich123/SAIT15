@@ -6,7 +6,7 @@ import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
-import { getTopicById, getPostsByTopic, createPost, updatePost, deletePost, castTopicVote, removeTopicVote } from '../lib/forum';
+import { getTopicById, getTopicPosts, createPost, updatePost, deletePost, castTopicVote, removeTopicVote } from '../lib/forum';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Topic {
@@ -71,7 +71,7 @@ export default function ForumTopicPage() {
       setLoading(true);
       const [topicData, postsData] = await Promise.all([
         getTopicById(id),
-        getPostsByTopic(id)
+        getTopicPosts(id)
       ]);
       
       setTopic(topicData);
