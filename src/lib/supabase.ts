@@ -191,8 +191,7 @@ export const getScoreHistory = async (cadetId: string): Promise<ScoreHistory[]> 
     .from('score_history')
     .select('*')
     .eq('cadet_id', cadetId)
-    .order('created_at', { ascending: false })
-    .limit(10);
+    .order('created_at', { ascending: true });
   
   if (error) throw error;
   
