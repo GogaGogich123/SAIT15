@@ -1,124 +1,244 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Eye, EyeOff, Shield } from 'lucide-react';
-import { Button, Input, Card } from '../components/ui';
+import { LogIn, Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ParticleBackground from '../components/ParticleBackground';
+import ModernBackground from '../components/ModernBackground';
+import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import { useToast } from '../hooks/useToast';
+import { fadeInUp, scaleIn } from '../utils/animations';
 
-export default function LoginPage() {
+const LoginPage: React.FC = () => {
+  const { success, error: showError } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const { error: showError, success: showSuccess } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
 
     try {
       const success = await login(email, password);
       if (success) {
-        showSuccess('Welcome back!', 'Successfully signed in');
         navigate('/');
       } else {
-        showError('Login failed', 'Invalid email or password');
+        setError('Неверный email или пароль');
       }
-    } catch (error) {
-      showError('Login failed', error instanceof Error ? error.message : 'An unexpected error occurred');
+    } catch (err) {
+      setError('Произошла ошибка при входе');
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width=%2260%22%20height=%2260%22%20viewBox=%220%200%2060%2060%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg%20fill=%22none%22%20fill-rule=%22evenodd%22%3E%3Cg%20fill=%22%23ffffff%22%20fill-opacity=%220.03%22%3E%3Ccircle%20cx=%2230%22%20cy=%2230%22%20r=%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-      
-      <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl border-0">
-        <div className="p-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full mb-4">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p className="text-gray-600">Sign in to your cadet account</p>
-          </div>
+  const handleCreateSuperAdmin = async () => {
+    if (!confirm('Создать главного администратора с данными:\nEmail: superadmin@nkkk.ru\nПароль: superadmin123')) {
+      return;
+    }
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+    try {
+      setCreatingAdmin(true);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-super-admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'superadmin@nkkk.ru',
+          password: 'superadmin123',
+          name: 'Главный администратор'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка создания администратора');
+      }
+
+      success('Главный администратор создан! Теперь можете войти в систему.');
+      setEmail('superadmin@nkkk.ru');
+      setPassword('superadmin123');
+    } catch (error) {
+      console.error('Error creating super admin:', error);
+      showError(error instanceof Error ? error.message : 'Ошибка создания администратора');
+    } finally {
+      setCreatingAdmin(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+    >
+      <div className="absolute inset-0">
+        <AnimatedSVGBackground />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-slate-800/95 z-10"></div>
+      
+      <div className="relative z-20 max-w-lg w-full mx-4">
+        <motion.div
+          variants={scaleIn}
+          initial="hidden"
+          animate="visible"
+          className="text-center mb-12"
+        >
+          <motion.div 
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            className="mx-auto h-24 w-24 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mb-8 shadow-2xl hover-glow"
+          >
+            <Shield className="h-14 w-14 text-white" />
+          </motion.div>
+          <h2 className="text-5xl font-display font-black text-white mb-4 text-shadow text-glow">Вход в систему</h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-orange-500 mx-auto rounded-full mb-4"></div>
+          <p className="text-xl text-blue-200 font-semibold">Новороссийский казачий кадетский корпус</p>
+        </motion.div>
+
+        <motion.form
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          className="glass-effect rounded-3xl p-12 shadow-2xl border border-white/20 hover-lift"
+          onSubmit={handleSubmit}
+        >
+          <div className="space-y-8">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+              <label htmlFor="email" className="block text-lg font-bold text-white mb-3">
+                Email
               </label>
-              <Input
+              <input
                 id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                className="w-full"
+                className="input text-lg"
+                placeholder="Введите ваш email"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+              <label htmlFor="password" className="block text-lg font-bold text-white mb-3">
+                Пароль
               </label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  className="w-full pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input text-lg"
+                placeholder="Введите ваш пароль"
+              />
             </div>
 
-            <Button
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center space-x-3 text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl p-4"
+              >
+                <AlertCircle className="h-6 w-6" />
+                <span className="text-base font-semibold">{error}</span>
+              </motion.div>
+            )}
+
+            <motion.button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              whileHover={{ scale: isLoading ? 1 : 1.05 }}
+              whileTap={{ scale: isLoading ? 1 : 0.95 }}
+              className="w-full flex items-center justify-center py-4 px-6 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-blue-900 font-black text-xl rounded-xl transition-all duration-500 shadow-2xl hover:shadow-yellow-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Signing In...
-                </div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-900"></div>
               ) : (
-                <div className="flex items-center justify-center">
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Sign In
-                </div>
+                <>
+                  <LogIn className="h-6 w-6 mr-3" />
+                  Войти
+                </>
               )}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button
-                onClick={() => navigate('/register')}
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-              >
-                Contact your administrator
-              </button>
-            </p>
+            </motion.button>
           </div>
-        </div>
-      </Card>
-    </div>
+
+          <div className="mt-12 pt-8 border-t border-white/20">
+            <div className="text-blue-200">
+              <p className="mb-4 font-bold text-lg">Тестовые учетные записи:</p>
+              
+              {/* Create Super Admin Button */}
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                className="glass-effect rounded-xl p-4 hover-lift mb-4 border border-yellow-400/30"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <strong className="text-yellow-300">Создать главного администратора:</strong><br />
+                    <span className="text-sm">Email: superadmin@nkkk.ru | Пароль: superadmin123</span>
+                  </div>
+                  <button
+                    onClick={handleCreateSuperAdmin}
+                    disabled={creatingAdmin}
+                    className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 flex items-center space-x-2 disabled:cursor-not-allowed"
+                  >
+                    {creatingAdmin ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <span>Создать</span>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+              
+              <div className="space-y-4">
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="glass-effect rounded-xl p-4 hover-lift"
+                >
+                  <strong>Главный администратор:</strong><br />
+                  Email: superadmin@nkkk.ru<br />
+                  Пароль: superadmin123
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="glass-effect rounded-xl p-4 hover-lift"
+                >
+                  <strong>Администратор:</strong><br />
+                  Email: admin@nkkk.ru<br />
+                  Пароль: admin123
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="glass-effect rounded-xl p-4 hover-lift"
+                >
+                  <strong>Кадет:</strong><br />
+                  Email: cadet@nkkk.ru<br />
+                  Пароль: cadet123
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </motion.form>
+      </div>
+    </motion.div>
   );
-}
+};
+
+export default LoginPage;

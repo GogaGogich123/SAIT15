@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { getUserRoles, getUserPermissions, type AdminRole, type AdminPermission } from '../lib/admin-roles';
-import LoadingSpinner from '../components/LoadingSpinner';
 
 interface User {
   id: string;
@@ -21,7 +20,6 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   hasPermission: (permissionName: string) => boolean;
-  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,84 +34,6 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        try {
-          // Get user data from users table
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (!userError && userData) {
-            let userObj: User = {
-              id: session.user.id,
-              name: userData.name,
-              role: userData.role
-            };
-
-            // If admin, get roles and permissions
-            if (userData.role === 'admin' || userData.role === 'super_admin') {
-              try {
-                const [adminRoles, permissions] = await Promise.all([
-                  getUserRoles(session.user.id),
-                  getUserPermissions(session.user.id)
-                ]);
-                userObj.adminRoles = adminRoles;
-                userObj.permissions = permissions;
-              } catch (roleError) {
-                console.error('Error fetching admin roles/permissions:', roleError);
-              }
-            }
-
-            setUser(userObj);
-          } else {
-            // Try to get cadet data
-            const { data: cadetData, error: cadetError } = await supabase
-              .from('cadets')
-              .select('*')
-              .eq('auth_user_id', session.user.id)
-              .maybeSingle();
-
-            if (!cadetError && cadetData) {
-              setUser({
-                id: session.user.id,
-                name: cadetData.name,
-                role: 'cadet',
-                platoon: cadetData.platoon,
-                squad: cadetData.squad,
-                cadetId: cadetData.id
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error loading user data:', error);
-        }
-      }
-      
-      setLoading(false);
-    });
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -257,16 +177,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user?.permissions?.some(permission => permission.name === permissionName) || false;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin, isSuperAdmin, hasPermission, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, isAdmin, isSuperAdmin, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );
