@@ -126,7 +126,7 @@ export const getCadets = async (): Promise<Cadet[]> => {
   return result;
 };
 
-export const getCadetById = async (id: string): Promise<Cadet> => {
+export const getCadetById = async (id: string): Promise<Cadet | null> => {
   const cacheKey = `${CACHE_KEYS.CADETS}_${id}`;
   const cached = cache.get<Cadet>(cacheKey);
   if (cached) {
@@ -140,7 +140,7 @@ export const getCadetById = async (id: string): Promise<Cadet> => {
     .maybeSingle();
   
   if (error) throw error;
-  if (!data) throw new Error('Cadet not found');
+  if (!data) return null;
   
   // Кэшируем результат
   cache.set(cacheKey, data, CACHE_DURATION.LONG);
