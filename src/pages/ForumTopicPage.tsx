@@ -11,7 +11,10 @@ import {
   Eye,
   Send,
   Edit,
-  Trash2
+  Trash2,
+  ThumbsUp,
+  BarChart3,
+  RotateCcw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
@@ -24,6 +27,11 @@ import {
   incrementTopicViews,
   updatePost,
   deletePost,
+  castTopicVote,
+  removeTopicVote,
+  hasUserVoted,
+  toggleTopicVoting,
+  resetTopicVotes,
   type ForumTopic,
   type ForumPost
 } from '../lib/forum';
@@ -40,6 +48,8 @@ const ForumTopicPage: React.FC = () => {
   const [newPostContent, setNewPostContent] = useState('');
   const [editingPost, setEditingPost] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [hasVoted, setHasVoted] = useState(false);
+  const [votingLoading, setVotingLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -221,21 +231,110 @@ const ForumTopicPage: React.FC = () => {
             <div className="prose prose-invert max-w-none mb-6">
               <p className="text-blue-100 text-lg leading-relaxed">{topic.content}</p>
             </div>
-            
-            <div className="flex items-center space-x-4 text-blue-300">
-              <div className="flex items-center space-x-2">
-                <User className="h-4 w-4" />
-                <span>{topic.author?.name}</span>
-                <span className="text-blue-400">({topic.author?.platoon})</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4" />
-                <span>{formatDate(topic.created_at)}</span>
-              </div>
-            </div>
           </motion.div>
 
           {/* Posts */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6 mb-8"
+          >
+            {posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                variants={staggerItem}
+                className="card-hover p-6"
+              >
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={post.author?.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
+                      alt={post.author?.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-blue-400"
+                    />
+                  </div>
+                  
+                  <div className="flex-grow">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <span className="font-bold text-white">{post.author?.name}</span>
+                        <span className="text-blue-400 text-sm">
+                          {post.author?.platoon} взвод, {post.author?.squad} отделение
+                        </span>
+                      </div>
+                      
+                      {(user?.cadetId === post.author_id || user?.role === 'admin') && (
+                        <div className="flex items-center space-x-2">
+                          {user?.cadetId === post.author_id && (
+                            <button
+                              onClick={() => {
+                                setEditingPost(post.id);
+                                setEditContent(post.content);
+                              }}
+                              className="text-blue-400 hover:text-blue-300 transition-colors"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                            title={user?.role === 'admin' && user?.cadetId !== post.author_id ? 'Удалить как администратор' : 'Удалить сообщение'}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {editingPost === post.id ? (
+                      <div className="space-y-4">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="input resize-none"
+                          rows={4}
+                        />
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEditPost(post.id)}
+                            className="btn-primary"
+                          >
+                            Сохранить
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingPost(null);
+                              setEditContent('');
+                            }}
+                            className="btn-ghost"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="prose prose-invert max-w-none mb-3">
+                          <p className="text-blue-100">{post.content}</p>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4 text-sm text-blue-400">
+                          <span>{formatDate(post.created_at)}</span>
+                          {post.is_edited && post.edited_at && (
+                            <span className="italic">
+                              (изменено {formatDate(post.edited_at)})
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
           <motion.div
             variants={staggerContainer}
             initial="hidden"

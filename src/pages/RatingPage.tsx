@@ -27,6 +27,18 @@ const RatingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug logging for filters
+  useEffect(() => {
+    console.log('Filter state changed:', {
+      selectedCategory,
+      selectedPlatoon,
+      selectedSquad,
+      searchTerm,
+      totalCadets: cadets.length,
+      filteredCount: filteredCadets.length
+    });
+  }, [selectedCategory, selectedPlatoon, selectedSquad, searchTerm, cadets.length, filteredCadets.length]);
+
   const platoons = ['7-1', '7-2', '8-1', '8-2', '9-1', '9-2', '10-1', '10-2', '11-1', '11-2'];
   const squads = [1, 2, 3];
 
@@ -89,6 +101,21 @@ const RatingPage: React.FC = () => {
     const matchesPlatoon = selectedPlatoon === 'all' || cadet.platoon === selectedPlatoon;
     const matchesSquad = selectedSquad === 'all' || cadet.squad.toString() === selectedSquad;
     return matchesSearch && matchesPlatoon && matchesSquad;
+  });
+
+  // Sort cadets by selected category
+  const sortedCadets = [...filteredCadets].sort((a, b) => {
+    switch (selectedCategory) {
+      case 'study':
+        return b.scores.study - a.scores.study;
+      case 'discipline':
+        return b.scores.discipline - a.scores.discipline;
+      case 'events':
+        return b.scores.events - a.scores.events;
+      case 'total':
+      default:
+        return b.scores.total - a.scores.total;
+    }
   });
 
   const getRankIcon = (rank: number) => {
@@ -260,7 +287,7 @@ const RatingPage: React.FC = () => {
           animate="visible"
           className="space-y-6"
         >
-          {filteredCadets.map((cadet, index) => (
+          {sortedCadets.map((cadet, index) => (
             <motion.div
               key={cadet.id}
               variants={staggerItem}
@@ -268,11 +295,15 @@ const RatingPage: React.FC = () => {
               className="group hover-lift"
             >
               <Link to={`/cadet/${cadet.id}`}>
-                <div className="card-hover p-8 shadow-2xl border border-white/20 hover:border-yellow-400/50 transition-all duration-500">
+                <div className={`card-hover p-8 shadow-2xl border transition-all duration-500 ${
+                  index < 3 
+                    ? 'border-yellow-400/50 bg-gradient-to-r from-yellow-500/10 to-orange-500/10' 
+                    : 'border-white/20 hover:border-yellow-400/50'
+                }`}>
                   <div className="flex items-center space-x-6">
                     {/* Rank */}
-                    <div className={`flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br ${getRankColor(cadet.rank)} flex items-center justify-center font-bold text-white text-xl shadow-2xl hover-glow`}>
-                      {getRankIcon(cadet.rank)}
+                    <div className={`flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br ${getRankColor(index + 1)} flex items-center justify-center font-bold text-white text-xl shadow-2xl hover-glow`}>
+                      {getRankIcon(index + 1)}
                     </div>
 
                     {/* Avatar */}
@@ -297,8 +328,12 @@ const RatingPage: React.FC = () => {
                     {/* Scores */}
                     <div className="flex-shrink-0 grid grid-cols-4 gap-4 text-center">
                       <div>
-                        <div className="flex items-center justify-center space-x-1">
-                          <span className="text-3xl font-black text-white text-glow">{cadet.scores.total}</span>
+                        <div className={`flex items-center justify-center space-x-1 ${
+                          selectedCategory === 'total' ? 'text-yellow-400' : 'text-white'
+                        }`}>
+                          <span className={`text-3xl font-black text-glow ${
+                            selectedCategory === 'total' ? 'text-yellow-400' : 'text-white'
+                          }`}>{cadet.scores.total}</span>
                           {(() => {
                             const change = getScoreChange(cadet);
                             if (change > 0) {
@@ -323,15 +358,21 @@ const RatingPage: React.FC = () => {
                         })()}
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-blue-300">{cadet.scores.study}</div>
+                        <div className={`text-2xl font-bold ${
+                          selectedCategory === 'study' ? 'text-yellow-400' : 'text-blue-300'
+                        }`}>{cadet.scores.study}</div>
                         <div className="text-sm text-blue-400 font-semibold">Учёба</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-red-300">{cadet.scores.discipline}</div>
+                        <div className={`text-2xl font-bold ${
+                          selectedCategory === 'discipline' ? 'text-yellow-400' : 'text-red-300'
+                        }`}>{cadet.scores.discipline}</div>
                         <div className="text-sm text-red-400 font-semibold">Дисциплина</div>
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-green-300">{cadet.scores.events}</div>
+                        <div className={`text-2xl font-bold ${
+                          selectedCategory === 'events' ? 'text-yellow-400' : 'text-green-300'
+                        }`}>{cadet.scores.events}</div>
                         <div className="text-sm text-green-400 font-semibold">Мероприятия</div>
                       </div>
                     </div>
