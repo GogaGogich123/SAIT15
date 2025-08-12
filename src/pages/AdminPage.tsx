@@ -773,10 +773,25 @@ const AdminPage: React.FC = () => {
           <ScoreModal
             isOpen={scoreModal.isOpen}
             onClose={() => setScoreModal({ isOpen: false })}
-            onSubmit={() => {}}
             form={scoreForm}
             setForm={setScoreForm}
             cadets={cadets}
+            onSuccess={() => {
+              // Обновляем данные после успешного начисления баллов
+              const loadData = async () => {
+                try {
+                  const [cadetsData, analyticsData] = await Promise.all([
+                    getCadets(),
+                    getAnalytics()
+                  ]);
+                  setCadets(cadetsData);
+                  setAnalytics(analyticsData);
+                } catch (error) {
+                  console.error('Error reloading data:', error);
+                }
+              };
+              loadData();
+            }}
           />
         </div>
       </div>

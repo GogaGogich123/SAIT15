@@ -14,10 +14,10 @@ import {
 import { useToast } from '../../hooks/useToast';
 import { 
   getCadets, 
-  addScoreHistory, 
-  updateCadetScores,
+  addScoreHistory,
   type Cadet 
 } from '../../lib/supabase';
+import { updateCadetScoresAdmin } from '../../lib/admin';
 import { staggerContainer, staggerItem } from '../../utils/animations';
 
 interface ScoreForm {
@@ -126,14 +126,8 @@ const ScoreManagement: React.FC = () => {
     try {
       setSubmitting(true);
       
-      await addScoreHistory({
-        cadet_id: form.cadetId,
-        category,
-        points: form.points,
-        description: form.description.trim()
-      });
-      
-      await updateCadetScores(form.cadetId, category, form.points);
+      // Используем Edge Function для обновления баллов с правами администратора
+      await updateCadetScoresAdmin(form.cadetId, category, form.points, form.description.trim());
       
       // Обновляем список кадетов
       await fetchCadets();

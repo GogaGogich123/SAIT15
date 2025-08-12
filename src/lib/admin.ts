@@ -139,3 +139,23 @@ export const getCadetsStats = async () => {
     throw error;
   }
 };
+
+// Обновление баллов кадета через Edge Function (для админов)
+export const updateCadetScoresAdmin = async (cadetId: string, category: 'study' | 'discipline' | 'events', points: number, description: string) => {
+  try {
+    console.log('Updating cadet scores via Edge Function', { cadetId, category, points, description });
+    
+    const result = await callEdgeFunction('update-cadet-score-admin', {
+      cadetId,
+      category,
+      points,
+      description
+    });
+    
+    console.log('Cadet scores updated successfully via Edge Function');
+    return result;
+  } catch (error) {
+    console.error('Update cadet scores via Edge Function failed', error);
+    throw error;
+  }
+};
