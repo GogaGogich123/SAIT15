@@ -13,7 +13,7 @@ const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
     { key: 'overview', name: 'Обзор', icon: BarChart3 },
     { key: 'cadets', name: 'Кадеты', icon: Users },
     { key: 'achievements', name: 'Достижения', icon: Trophy },
-    { key: 'scores', name: 'Баллы', icon: Target },
+    { key: 'scores', name: 'Управление баллами', icon: Target },
     { key: 'news', name: 'Новости', icon: FileText },
     { key: 'tasks', name: 'Задания', icon: CheckSquare },
     { key: 'events', name: 'События', icon: Calendar },

@@ -21,6 +21,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import AdminTabs from '../components/admin/AdminTabs';
 import AdminStats from '../components/admin/AdminStats';
 import AdminQuickActions from '../components/admin/AdminQuickActions';
+import ScoreManagement from '../components/admin/ScoreManagement';
 import AchievementModal from '../components/admin/modals/AchievementModal';
 import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
@@ -377,36 +378,7 @@ const AdminPage: React.FC = () => {
 
   // Score handlers
   const handleAddScore = () => {
-    setScoreForm({
-      cadetId: '',
-      category: 'study',
-      points: 0,
-      description: ''
-    });
-    setScoreModal({ isOpen: true });
-  };
-
-  const handleSubmitScore = async () => {
-    try {
-      await addScoreHistory({
-        cadet_id: scoreForm.cadetId,
-        category: scoreForm.category,
-        points: scoreForm.points,
-        description: scoreForm.description
-      });
-      
-      await updateCadetScores(scoreForm.cadetId, scoreForm.category, scoreForm.points);
-      
-      // Refresh cadets data
-      const updatedCadets = await getCadets();
-      setCadets(updatedCadets);
-      
-      success('Баллы начислены');
-      setScoreModal({ isOpen: false });
-    } catch (error) {
-      console.error('Error adding score:', error);
-      showError('Ошибка начисления баллов');
-    }
+    setActiveTab('scores');
   };
 
   // News handlers
@@ -760,6 +732,10 @@ const AdminPage: React.FC = () => {
               {activeTab === 'data-management' && (
                 <AdminResetMenu />
               )}
+
+              {activeTab === 'scores' && (
+                <ScoreManagement />
+              )}
             </>
           )}
 
@@ -797,7 +773,7 @@ const AdminPage: React.FC = () => {
           <ScoreModal
             isOpen={scoreModal.isOpen}
             onClose={() => setScoreModal({ isOpen: false })}
-            onSubmit={handleSubmitScore}
+            onSubmit={() => {}}
             form={scoreForm}
             setForm={setScoreForm}
             cadets={cadets}
