@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { getUserRoles, getUserPermissions, type AdminRole, type AdminPermission } from '../lib/admin-roles';
-import { LoadingSpinner } from '../components/LoadingSpinner';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 interface User {
   id: string;
