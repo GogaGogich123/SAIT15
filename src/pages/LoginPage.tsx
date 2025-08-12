@@ -144,6 +144,14 @@ const LoginPage: React.FC = () => {
                   whileHover={{ scale: 1.02 }}
                   className="glass-effect rounded-xl p-4 hover-lift"
                 >
+                  <strong>Главный администратор:</strong><br />
+                  Email: superadmin@nkkk.ru<br />
+                  Пароль: superadmin123
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="glass-effect rounded-xl p-4 hover-lift"
+                >
                   <strong>Администратор:</strong><br />
                   Email: admin@nkkk.ru<br />
                   Пароль: admin123

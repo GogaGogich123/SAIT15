@@ -22,6 +22,7 @@ import AdminTabs from '../components/admin/AdminTabs';
 import AdminStats from '../components/admin/AdminStats';
 import AdminQuickActions from '../components/admin/AdminQuickActions';
 import ScoreManagement from '../components/admin/ScoreManagement';
+import AdminManagement from '../components/admin/AdminManagement';
 import AchievementModal from '../components/admin/modals/AchievementModal';
 import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
@@ -60,7 +61,7 @@ import {
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
 const AdminPage: React.FC = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin, hasPermission } = useAuth();
   const { success, error: showError } = useToast();
   
   // State
@@ -509,6 +510,13 @@ const AdminPage: React.FC = () => {
                 <AdminStats analytics={analytics} />
               )}
 
+              {activeTab === 'admins' && (
+                <AdminManagement 
+                  currentUserId={user?.id || ''} 
+                  isSuperAdmin={isSuperAdmin} 
+                />
+              )}
+
               {activeTab === 'cadets' && (
                 <motion.div
                   variants={staggerContainer}
@@ -518,10 +526,12 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold text-white">Управление кадетами</h2>
-                    <button onClick={handleCreateCadet} className="btn-primary">
-                      <UserPlus className="h-5 w-5 mr-2" />
-                      Добавить кадета
-                    </button>
+                    {hasPermission('manage_cadets') && (
+                      <button onClick={handleCreateCadet} className="btn-primary">
+                        <UserPlus className="h-5 w-5 mr-2" />
+                        Добавить кадета
+                      </button>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -542,21 +552,23 @@ const AdminPage: React.FC = () => {
                             <p className="text-blue-300">{cadet.platoon} взвод</p>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEditCadet(cadet)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            <Edit className="h-4 w-4 mr-1 inline" />
-                            Изменить
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCadet(cadet.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {hasPermission('manage_cadets') && (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEditCadet(cadet)}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            >
+                              <Edit className="h-4 w-4 mr-1 inline" />
+                              Изменить
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCadet(cadet.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     ))}
                   </div>
@@ -572,10 +584,12 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold text-white">Управление достижениями</h2>
-                    <button onClick={handleCreateAchievement} className="btn-primary">
-                      <Plus className="h-5 w-5 mr-2" />
-                      Создать достижение
-                    </button>
+                    {hasPermission('manage_achievements') && (
+                      <button onClick={handleCreateAchievement} className="btn-primary">
+                        <Plus className="h-5 w-5 mr-2" />
+                        Создать достижение
+                      </button>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -587,21 +601,23 @@ const AdminPage: React.FC = () => {
                       >
                         <h3 className="text-xl font-bold text-white mb-2">{achievement.title}</h3>
                         <p className="text-white/90 mb-4">{achievement.description}</p>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleEditAchievement(achievement)}
-                            className="flex-1 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            <Edit className="h-4 w-4 mr-1 inline" />
-                            Изменить
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAchievement(achievement.id)}
-                            className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {hasPermission('manage_achievements') && (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEditAchievement(achievement)}
+                              className="flex-1 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            >
+                              <Edit className="h-4 w-4 mr-1 inline" />
+                              Изменить
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAchievement(achievement.id)}
+                              className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     ))}
                   </div>
@@ -617,10 +633,12 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold text-white">Управление событиями</h2>
-                    <button onClick={handleCreateEvent} className="btn-primary">
-                      <Plus className="h-5 w-5 mr-2" />
-                      Создать событие
-                    </button>
+                    {hasPermission('manage_events') && (
+                      <button onClick={handleCreateEvent} className="btn-primary">
+                        <Plus className="h-5 w-5 mr-2" />
+                        Создать событие
+                      </button>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -647,25 +665,31 @@ const AdminPage: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleViewEventParticipants(event)}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            <Users className="h-4 w-4 mr-1 inline" />
-                            Участники
-                          </button>
-                          <button
-                            onClick={() => handleEditEvent(event)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEvent(event.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {hasPermission('view_event_participants') && (
+                            <button
+                              onClick={() => handleViewEventParticipants(event)}
+                              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            >
+                              <Users className="h-4 w-4 mr-1 inline" />
+                              Участники
+                            </button>
+                          )}
+                          {hasPermission('manage_events') && (
+                            <>
+                              <button
+                                onClick={() => handleEditEvent(event)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteEvent(event.id)}
+                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </motion.div>
                     ))}
@@ -682,10 +706,12 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="flex justify-between items-center">
                     <h2 className="text-3xl font-bold text-white">Управление новостями</h2>
-                    <button onClick={handleCreateNews} className="btn-primary">
-                      <Plus className="h-5 w-5 mr-2" />
-                      Создать новость
-                    </button>
+                    {hasPermission('manage_news') && (
+                      <button onClick={handleCreateNews} className="btn-primary">
+                        <Plus className="h-5 w-5 mr-2" />
+                        Создать новость
+                      </button>
+                    )}
                   </div>
                   
                   <div className="space-y-4">
@@ -708,20 +734,22 @@ const AdminPage: React.FC = () => {
                             <p className="text-blue-300 mb-2">Автор: {newsItem.author}</p>
                             <p className="text-blue-200 line-clamp-2">{newsItem.content}</p>
                           </div>
-                          <div className="flex space-x-2 ml-4">
-                            <button
-                              onClick={() => handleEditNews(newsItem)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteNews(newsItem.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
+                          {hasPermission('manage_news') && (
+                            <div className="flex space-x-2 ml-4">
+                              <button
+                                onClick={() => handleEditNews(newsItem)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteNews(newsItem.id)}
+                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     ))}
@@ -729,11 +757,11 @@ const AdminPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {activeTab === 'data-management' && (
+              {activeTab === 'data-management' && hasPermission('system_reset') && (
                 <AdminResetMenu />
               )}
 
-              {activeTab === 'scores' && (
+              {activeTab === 'scores' && (hasPermission('manage_scores_study') || hasPermission('manage_scores_discipline') || hasPermission('manage_scores_events')) && (
                 <ScoreManagement />
               )}
             </>

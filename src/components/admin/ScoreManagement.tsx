@@ -19,6 +19,7 @@ import {
 } from '../../lib/supabase';
 import { updateCadetScoresAdmin } from '../../lib/admin';
 import { staggerContainer, staggerItem } from '../../utils/animations';
+import { useAuth } from '../../context/AuthContext';
 
 interface ScoreForm {
   cadetId: string;
@@ -28,6 +29,7 @@ interface ScoreForm {
 
 const ScoreManagement: React.FC = () => {
   const { success, error: showError } = useToast();
+  const { hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<'study' | 'discipline' | 'events'>('study');
   const [cadets, setCadets] = useState<Cadet[]>([]);
   const [filteredCadets, setFilteredCadets] = useState<Cadet[]>([]);
@@ -50,24 +52,36 @@ const ScoreManagement: React.FC = () => {
       name: 'Учёба',
       icon: BookOpen,
       color: 'from-blue-600 to-blue-800',
-      description: 'Начисление баллов за академические успехи'
+      description: 'Начисление баллов за академические успехи',
+      permission: 'manage_scores_study'
     },
     {
       key: 'discipline' as const,
       name: 'Дисциплина',
       icon: Target,
       color: 'from-red-600 to-red-800',
-      description: 'Начисление баллов за дисциплину и поведение'
+      description: 'Начисление баллов за дисциплину и поведение',
+      permission: 'manage_scores_discipline'
     },
     {
       key: 'events' as const,
       name: 'Мероприятия',
       icon: Users,
       color: 'from-green-600 to-green-800',
-      description: 'Начисление баллов за участие в мероприятиях'
+      description: 'Начисление баллов за участие в мероприятиях',
+      permission: 'manage_scores_events'
     }
   ];
 
+  // Фильтруем вкладки по разрешениям
+  const availableTabs = tabs.filter(tab => hasPermission(tab.permission));
+
+  // Устанавливаем первую доступную вкладку как активную
+  useEffect(() => {
+    if (availableTabs.length > 0 && !availableTabs.find(tab => tab.key === activeTab)) {
+      setActiveTab(availableTabs[0].key);
+    }
+  }, [availableTabs, activeTab]);
   useEffect(() => {
     const fetchCadets = async () => {
       try {
@@ -189,7 +203,7 @@ const ScoreManagement: React.FC = () => {
         variants={staggerItem}
         className="flex flex-wrap justify-center gap-4 mb-8"
       >
-        {tabs.map(({ key, name, icon: Icon, color }) => (
+        {availableTabs.map(({ key, name, icon: Icon, color }) => (
           <motion.button
             key={key}
             whileHover={{ scale: 1.05, y: -2 }}
@@ -207,20 +221,29 @@ const ScoreManagement: React.FC = () => {
         ))}
       </motion.div>
 
+      {availableTabs.length === 0 && (
+        <div className="text-center py-12">
+          <Target className="h-16 w-16 text-blue-400 mx-auto mb-4 opacity-50" />
+          <h3 className="text-2xl font-bold text-white mb-2">Нет доступных категорий</h3>
+          <p className="text-blue-200">У вас нет разрешений для управления баллами</p>
+        </div>
+      )}
+
       {/* Active Tab Content */}
-      <div className="space-y-8">
+      {availableTabs.length > 0 && (
+        <div className="space-y-8">
         {/* Tab Header */}
-        <div className={`card-gradient ${tabs.find(t => t.key === activeTab)?.color} p-8 text-center`}>
+        <div className={`card-gradient ${availableTabs.find(t => t.key === activeTab)?.color} p-8 text-center`}>
           <div className="flex items-center justify-center space-x-4 mb-4">
-            {React.createElement(tabs.find(t => t.key === activeTab)?.icon || BookOpen, {
+            {React.createElement(availableTabs.find(t => t.key === activeTab)?.icon || BookOpen, {
               className: "h-12 w-12 text-white"
             })}
             <h3 className="text-3xl font-bold text-white">
-              {tabs.find(t => t.key === activeTab)?.name}
+              {availableTabs.find(t => t.key === activeTab)?.name}
             </h3>
           </div>
           <p className="text-white/90 text-lg">
-            {tabs.find(t => t.key === activeTab)?.description}
+            {availableTabs.find(t => t.key === activeTab)?.description}
           </p>
         </div>
 

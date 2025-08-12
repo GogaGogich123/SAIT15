@@ -11,6 +11,7 @@ interface AdminTabsProps {
 const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
     { key: 'overview', name: 'Обзор', icon: BarChart3 },
+    { key: 'admins', name: 'Администраторы', icon: Users },
     { key: 'cadets', name: 'Кадеты', icon: Users },
     { key: 'achievements', name: 'Достижения', icon: Trophy },
     { key: 'scores', name: 'Управление баллами', icon: Target },
