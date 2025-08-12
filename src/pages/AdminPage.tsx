@@ -27,7 +27,6 @@ import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
 import ScoreModal from '../components/admin/modals/ScoreModal';
 import AdminResetMenu from '../components/admin/AdminResetMenu';
-import ForumCategoryManagement from '../components/admin/ForumCategoryManagement';
 import { 
   getCadets, 
   getAchievements, 
@@ -736,10 +735,6 @@ const AdminPage: React.FC = () => {
 
               {activeTab === 'scores' && (
                 <ScoreManagement />
-              )}
-
-              {activeTab === 'forum' && (
-                <ForumCategoryManagement />
               )}
             </>
           )}

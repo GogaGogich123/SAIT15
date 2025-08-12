@@ -1,101 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, User, Calendar, Eye, ThumbsUp, Edit, Trash2, Pin, Lock } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { LoadingSpinner } from '../components/LoadingSpinner';
+import { motion } from 'framer-motion';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, 
+  MessageCircle, 
+  User, 
+  Clock, 
+  Pin, 
+  Lock, 
+  Eye,
+  Send,
+  Edit,
+  Trash2
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getTopicById, getTopicPosts, createPost, updatePost, deletePost, voteTopic, unvoteTopic } from '../lib/forum';
-import { formatDistanceToNow } from 'date-fns';
+import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { useToast } from '../hooks/useToast';
+import { 
+  getTopicById, 
+  getPostsByTopic, 
+  createPost,
+  incrementTopicViews,
+  updatePost,
+  deletePost,
+  type ForumTopic,
+  type ForumPost
+} from '../lib/forum';
+import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
-interface Topic {
-  id: string;
-  title: string;
-  content: string;
-  author_id: string;
-  is_pinned: boolean;
-  is_locked: boolean;
-  views_count: number;
-  posts_count: number;
-  votes_count: number;
-  voting_enabled: boolean;
-  created_at: string;
-  updated_at: string;
-  author: {
-    name: string;
-    avatar_url?: string;
-    platoon: string;
-    rank: number;
-  };
-}
-
-interface Post {
-  id: string;
-  content: string;
-  author_id: string;
-  is_edited: boolean;
-  edited_at?: string;
-  created_at: string;
-  author: {
-    name: string;
-    avatar_url?: string;
-    platoon: string;
-    rank: number;
-  };
-}
-
-export default function ForumTopicPage() {
-  const { id } = useParams<{ id: string }>();
+const ForumTopicPage: React.FC = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { user, cadet } = useAuth();
-  const [topic, setTopic] = useState<Topic | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { success, error: showError } = useToast();
+  
+  const [topic, setTopic] = useState<ForumTopic | null>(null);
+  const [posts, setPosts] = useState<ForumPost[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
   const [editingPost, setEditingPost] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [hasVoted, setHasVoted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
-      loadTopicData();
-    }
+    const fetchTopicData = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        
+        // Получаем тему
+        const topicData = await getTopicById(id);
+        if (!topicData) {
+          setError('Тема не найдена');
+          return;
+        }
+        setTopic(topicData);
+        
+        // Увеличиваем счетчик просмотров
+        await incrementTopicViews(id);
+        
+        // Получаем посты
+        const postsData = await getPostsByTopic(id);
+        setPosts(postsData);
+        
+      } catch (err) {
+        console.error('Error fetching topic data:', err);
+        setError('Ошибка загрузки темы');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopicData();
   }, [id]);
 
-  const loadTopicData = async () => {
-    if (!id) return;
-    
-    try {
-      setLoading(true);
-      const [topicData, postsData] = await Promise.all([
-        getTopicById(id),
-        getTopicPosts(id)
-      ]);
-      
-      setTopic(topicData);
-      setPosts(postsData);
-      
-      // Check if user has voted (this would need to be implemented in the forum lib)
-      // setHasVoted(await checkUserVote(id, cadet?.id));
-    } catch (error) {
-      console.error('Error loading topic:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreatePost = async () => {
-    if (!newPostContent.trim() || !cadet || !id) return;
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.cadetId || !id || !newPostContent.trim()) return;
 
     try {
       setSubmitting(true);
-      await createPost(id, cadet.id, newPostContent);
+      const newPost = await createPost(id, newPostContent.trim(), user.cadetId);
+      setPosts([...posts, newPost]);
       setNewPostContent('');
-      await loadTopicData();
-    } catch (error) {
-      console.error('Error creating post:', error);
+      success('Ответ добавлен');
+    } catch (err) {
+      console.error('Error creating post:', err);
+      showError('Ошибка создания ответа');
     } finally {
       setSubmitting(false);
     }
@@ -105,263 +99,290 @@ export default function ForumTopicPage() {
     if (!editContent.trim()) return;
 
     try {
-      await updatePost(postId, editContent);
+      await updatePost(postId, editContent.trim());
+      setPosts(posts.map(post => 
+        post.id === postId 
+          ? { ...post, content: editContent.trim(), is_edited: true, edited_at: new Date().toISOString() }
+          : post
+      ));
       setEditingPost(null);
       setEditContent('');
-      await loadTopicData();
-    } catch (error) {
-      console.error('Error updating post:', error);
+      success('Сообщение обновлено');
+    } catch (err) {
+      console.error('Error updating post:', err);
+      showError('Ошибка обновления сообщения');
     }
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!confirm('Вы уверены, что хотите удалить это сообщение?')) return;
 
     try {
       await deletePost(postId);
-      await loadTopicData();
-    } catch (error) {
-      console.error('Error deleting post:', error);
+      setPosts(posts.filter(post => post.id !== postId));
+      success('Сообщение удалено');
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      showError('Ошибка удаления сообщения');
     }
   };
 
-  const handleVote = async () => {
-    if (!cadet || !id) return;
-
-    try {
-      if (hasVoted) {
-        await unvoteTopic(id, cadet.id);
-        setHasVoted(false);
-      } else {
-        await voteTopic(id, cadet.id);
-        setHasVoted(true);
-      }
-      await loadTopicData();
-    } catch (error) {
-      console.error('Error voting:', error);
-    }
-  };
-
-  const startEdit = (post: Post) => {
-    setEditingPost(post.id);
-    setEditContent(post.content);
-  };
-
-  const cancelEdit = () => {
-    setEditingPost(null);
-    setEditContent('');
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <LoadingSpinner />
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner message="Загрузка темы..." size="lg" />
       </div>
     );
   }
 
-  if (!topic) {
+  if (error || !topic) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <h2 className="text-xl font-bold text-white mb-4">Topic not found</h2>
-          <Button onClick={() => navigate('/forum')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Forum
-          </Button>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Ошибка</h2>
+          <p className="text-blue-200 mb-4">{error || 'Тема не найдена'}</p>
+          <Link to="/forum" className="btn-primary">
+            Вернуться к форуму
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/forum')}
-            className="text-white border-white/20 hover:bg-white/10"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen relative overflow-hidden"
+    >
+      <div className="absolute inset-0">
+        <AnimatedSVGBackground />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-slate-800/95 z-10"></div>
+      
+      <div className="relative z-20 section-padding">
+        <div className="container-custom max-w-4xl">
+          {/* Back Button */}
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            className="mb-8"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Forum
-          </Button>
-        </div>
+            <Link 
+              to="/forum"
+              className="inline-flex items-center space-x-2 text-blue-300 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span>Вернуться к форуму</span>
+            </Link>
+          </motion.div>
 
-        {/* Topic Header */}
-        <Card className="mb-6 bg-white/10 backdrop-blur-sm border-white/20">
-          <div className="p-6">
+          {/* Topic Header */}
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            className="card-hover p-8 mb-8"
+          >
             <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  {topic.is_pinned && <Pin className="w-4 h-4 text-yellow-400" />}
-                  {topic.is_locked && <Lock className="w-4 h-4 text-red-400" />}
-                  <h1 className="text-2xl font-bold text-white">{topic.title}</h1>
+              <div className="flex items-center space-x-2">
+                {topic.is_pinned && <Pin className="h-5 w-5 text-yellow-400" />}
+                {topic.is_locked && <Lock className="h-5 w-5 text-red-400" />}
+              </div>
+              <div className="flex items-center space-x-4 text-blue-300">
+                <div className="flex items-center space-x-1">
+                  <Eye className="h-4 w-4" />
+                  <span>{topic.views_count}</span>
                 </div>
-                
-                <div className="flex items-center gap-4 text-sm text-gray-300 mb-4">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span>{topic.author.name}</span>
-                    <span className="text-blue-400">({topic.author.platoon})</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{formatDistanceToNow(new Date(topic.created_at), { addSuffix: true })}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Eye className="w-4 h-4" />
-                    <span>{topic.views_count} views</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    <span>{topic.posts_count} replies</span>
-                  </div>
+                <div className="flex items-center space-x-1">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>{posts.length}</span>
                 </div>
               </div>
-
-              {topic.voting_enabled && (
-                <Button
-                  onClick={handleVote}
-                  variant={hasVoted ? "default" : "outline"}
-                  className={hasVoted ? "bg-blue-600 hover:bg-blue-700" : "border-white/20 hover:bg-white/10"}
-                  disabled={!cadet}
-                >
-                  <ThumbsUp className="w-4 h-4 mr-2" />
-                  {topic.votes_count}
-                </Button>
-              )}
             </div>
-
-            <div className="prose prose-invert max-w-none">
-              <p className="text-gray-200 whitespace-pre-wrap">{topic.content}</p>
+            
+            <h1 className="text-4xl font-display font-black text-white mb-6 text-shadow">
+              {topic.title}
+            </h1>
+            
+            <div className="prose prose-invert max-w-none mb-6">
+              <p className="text-blue-100 text-lg leading-relaxed">{topic.content}</p>
             </div>
-          </div>
-        </Card>
+            
+            <div className="flex items-center space-x-4 text-blue-300">
+              <div className="flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                <span>{topic.author?.name}</span>
+                <span className="text-blue-400">({topic.author?.platoon})</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4" />
+                <span>{formatDate(topic.created_at)}</span>
+              </div>
+            </div>
+          </motion.div>
 
-        {/* Posts */}
-        <div className="space-y-4 mb-6">
-          {posts.map((post) => (
-            <Card key={post.id} className="bg-white/5 backdrop-blur-sm border-white/10">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {post.author.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white">{post.author.name}</div>
-                      <div className="text-sm text-gray-400">{post.author.platoon}</div>
-                    </div>
+          {/* Posts */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6 mb-8"
+          >
+            {posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                variants={staggerItem}
+                className="card-hover p-6"
+              >
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={post.author?.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
+                      alt={post.author?.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-blue-400"
+                    />
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">
-                      {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                      {post.is_edited && post.edited_at && (
-                        <span className="ml-2 text-xs">(edited)</span>
-                      )}
-                    </span>
-                    
-                    {cadet && cadet.id === post.author_id && (
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => startEdit(post)}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeletePost(post.id)}
-                          className="text-gray-400 hover:text-red-400"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                  <div className="flex-grow">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <span className="font-bold text-white">{post.author?.name}</span>
+                        <span className="text-blue-400 text-sm">
+                          {post.author?.platoon} взвод, {post.author?.squad} отделение
+                        </span>
                       </div>
+                      
+                      {user?.cadetId === post.author_id && (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              setEditingPost(post.id);
+                              setEditContent(post.content);
+                            }}
+                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {editingPost === post.id ? (
+                      <div className="space-y-4">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="input resize-none"
+                          rows={4}
+                        />
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEditPost(post.id)}
+                            className="btn-primary"
+                          >
+                            Сохранить
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingPost(null);
+                              setEditContent('');
+                            }}
+                            className="btn-ghost"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="prose prose-invert max-w-none mb-3">
+                          <p className="text-blue-100">{post.content}</p>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4 text-sm text-blue-400">
+                          <span>{formatDate(post.created_at)}</span>
+                          {post.is_edited && post.edited_at && (
+                            <span className="italic">
+                              (изменено {formatDate(post.edited_at)})
+                            </span>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
+              </motion.div>
+            ))}
+          </motion.div>
 
-                {editingPost === post.id ? (
-                  <div className="space-y-3">
-                    <textarea
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none"
-                      rows={4}
-                      placeholder="Edit your post..."
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleEditPost(post.id)}
-                        disabled={!editContent.trim()}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={cancelEdit}
-                        className="border-white/20 hover:bg-white/10"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="prose prose-invert max-w-none">
-                    <p className="text-gray-200 whitespace-pre-wrap">{post.content}</p>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* New Post Form */}
-        {cadet && !topic.is_locked && (
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Reply to Topic</h3>
-              <div className="space-y-4">
+          {/* Reply Form */}
+          {user && !topic.is_locked && (
+            <motion.div
+              variants={fadeInUp}
+              initial="hidden"
+              animate="visible"
+              className="card-hover p-8"
+            >
+              <h3 className="text-2xl font-bold text-white mb-6">Ответить</h3>
+              <form onSubmit={handleCreatePost} className="space-y-4">
                 <textarea
                   value={newPostContent}
                   onChange={(e) => setNewPostContent(e.target.value)}
-                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none"
-                  rows={4}
-                  placeholder="Write your reply..."
+                  placeholder="Напишите ваш ответ..."
+                  rows={6}
+                  className="input resize-none"
+                  required
                 />
-                <Button
-                  onClick={handleCreatePost}
-                  disabled={!newPostContent.trim() || submitting}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {submitting ? 'Posting...' : 'Post Reply'}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={submitting || !newPostContent.trim()}
+                    className="btn-primary flex items-center space-x-2 disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <>
+                        <Send className="h-5 w-5" />
+                        <span>Отправить</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
 
-        {!cadet && (
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <div className="p-6 text-center">
-              <p className="text-gray-300 mb-4">You need to be logged in to reply to this topic.</p>
-              <Link to="/login">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Login to Reply
-                </Button>
-              </Link>
+          {topic.is_locked && (
+            <div className="text-center py-8">
+              <Lock className="h-12 w-12 text-red-400 mx-auto mb-4" />
+              <p className="text-red-300 text-lg">Тема заблокирована для новых ответов</p>
             </div>
-          </Card>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
-}
+};
+
+export default ForumTopicPage;

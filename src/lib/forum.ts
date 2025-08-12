@@ -33,8 +33,6 @@ export interface ForumTopic {
   is_locked: boolean;
   views_count: number;
   posts_count: number;
-  votes_count?: number;
-  voting_enabled?: boolean;
   last_post_at: string;
   last_post_by?: string;
   last_post_author?: {
@@ -60,13 +58,6 @@ export interface ForumPost {
   edited_at?: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface TopicVote {
-  id: string;
-  topic_id: string;
-  cadet_id: string;
-  created_at: string;
 }
 
 // Forum functions
@@ -202,98 +193,4 @@ export const deletePost = async (postId: string): Promise<void> => {
     .eq('id', postId);
   
   if (error) throw error;
-};
-
-// Admin functions for forum categories
-export const createForumCategory = async (categoryData: Omit<ForumCategory, 'id' | 'created_at' | 'updated_at'>): Promise<ForumCategory> => {
-  const { data, error } = await supabase
-    .from('forum_categories')
-    .insert([categoryData])
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
-};
-
-export const updateForumCategory = async (categoryId: string, updates: Partial<ForumCategory>): Promise<void> => {
-  const { error } = await supabase
-    .from('forum_categories')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', categoryId);
-  
-  if (error) throw error;
-};
-
-export const deleteForumCategory = async (categoryId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('forum_categories')
-    .delete()
-    .eq('id', categoryId);
-  
-  if (error) throw error;
-};
-
-// Voting functions
-export const toggleTopicVoting = async (topicId: string, enabled: boolean): Promise<void> => {
-  const { error } = await supabase
-    .from('forum_topics')
-    .update({ voting_enabled: enabled })
-    .eq('id', topicId);
-  
-  if (error) throw error;
-};
-
-export const castTopicVote = async (topicId: string, cadetId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('topic_votes')
-    .insert([{
-      topic_id: topicId,
-      cadet_id: cadetId
-    }]);
-  
-  if (error) throw error;
-};
-
-export const removeTopicVote = async (topicId: string, cadetId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('topic_votes')
-    .delete()
-    .eq('topic_id', topicId)
-    .eq('cadet_id', cadetId);
-  
-  if (error) throw error;
-};
-
-export const hasUserVoted = async (topicId: string, cadetId: string): Promise<boolean> => {
-  const { data, error } = await supabase
-    .from('topic_votes')
-    .select('id')
-    .eq('topic_id', topicId)
-    .eq('cadet_id', cadetId)
-    .maybeSingle();
-  
-  if (error) throw error;
-  return !!data;
-};
-
-export const resetTopicVotes = async (topicId: string): Promise<void> => {
-  // Удаляем все голоса
-  const { error: deleteError } = await supabase
-    .from('topic_votes')
-    .delete()
-    .eq('topic_id', topicId);
-  
-  if (deleteError) throw deleteError;
-  
-  // Сбрасываем счетчик
-  const { error: updateError } = await supabase
-    .from('forum_topics')
-    .update({ votes_count: 0 })
-    .eq('id', topicId);
-  
-  if (updateError) throw updateError;
 };
