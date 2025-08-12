@@ -137,9 +137,10 @@ export const getCadetById = async (id: string): Promise<Cadet> => {
     .from('cadets')
     .select('*')
     .eq('id', id)
-    .single();
+    .maybeSingle();
   
   if (error) throw error;
+  if (!data) throw new Error('Cadet not found');
   
   // Кэшируем результат
   cache.set(cacheKey, data, CACHE_DURATION.LONG);
