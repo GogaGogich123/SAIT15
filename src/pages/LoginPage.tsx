@@ -6,13 +6,16 @@ import { useAuth } from '../context/AuthContext';
 import ParticleBackground from '../components/ParticleBackground';
 import ModernBackground from '../components/ModernBackground';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
+import { useToast } from '../hooks/useToast';
 import { fadeInUp, scaleIn } from '../utils/animations';
 
 const LoginPage: React.FC = () => {
+  const { success, error: showError } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -32,6 +35,46 @@ const LoginPage: React.FC = () => {
       setError('Произошла ошибка при входе');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreateSuperAdmin = async () => {
+    if (!confirm('Создать главного администратора с данными:\nEmail: superadmin@nkkk.ru\nПароль: superadmin123')) {
+      return;
+    }
+
+    try {
+      setCreatingAdmin(true);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-super-admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'superadmin@nkkk.ru',
+          password: 'superadmin123',
+          name: 'Главный администратор'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка создания администратора');
+      }
+
+      success('Главный администратор создан! Теперь можете войти в систему.');
+      setEmail('superadmin@nkkk.ru');
+      setPassword('superadmin123');
+    } catch (error) {
+      console.error('Error creating super admin:', error);
+      showError(error instanceof Error ? error.message : 'Ошибка создания администратора');
+    } finally {
+      setCreatingAdmin(false);
     }
   };
 
@@ -139,6 +182,31 @@ const LoginPage: React.FC = () => {
           <div className="mt-12 pt-8 border-t border-white/20">
             <div className="text-blue-200">
               <p className="mb-4 font-bold text-lg">Тестовые учетные записи:</p>
+              
+              {/* Create Super Admin Button */}
+              <motion.div 
+                whileHover={{ scale: 1.02 }}
+                className="glass-effect rounded-xl p-4 hover-lift mb-4 border border-yellow-400/30"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <strong className="text-yellow-300">Создать главного администратора:</strong><br />
+                    <span className="text-sm">Email: superadmin@nkkk.ru | Пароль: superadmin123</span>
+                  </div>
+                  <button
+                    onClick={handleCreateSuperAdmin}
+                    disabled={creatingAdmin}
+                    className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 flex items-center space-x-2 disabled:cursor-not-allowed"
+                  >
+                    {creatingAdmin ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <span>Создать</span>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+              
               <div className="space-y-4">
                 <motion.div 
                   whileHover={{ scale: 1.02 }}

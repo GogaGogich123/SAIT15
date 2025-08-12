@@ -7,38 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-// Функция для проверки прав главного администратора
-async function checkSuperAdminRole(authHeader: string | null, supabaseAdmin: any) {
-  if (!authHeader) {
-    throw new Error('Отсутствует токен авторизации')
-  }
-
-  const token = authHeader.replace('Bearer ', '')
-  
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-  
-  if (authError || !user) {
-    throw new Error('Недействительный токен авторизации')
-  }
-
-  // Проверяем, является ли пользователь главным админом
-  const { data: isSuperAdmin, error: checkError } = await supabaseAdmin
-    .rpc('user_has_permission', { 
-      user_id: user.id, 
-      permission_name: 'manage_admins' 
-    })
-
-  if (checkError) {
-    throw new Error('Ошибка проверки прав доступа')
-  }
-
-  if (!isSuperAdmin) {
-    throw new Error('Недостаточно прав доступа. Требуются права главного администратора.')
-  }
-
-  return user
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -56,23 +24,40 @@ serve(async (req) => {
       }
     )
 
-    const authHeader = req.headers.get('Authorization')
-    const currentUser = await checkSuperAdminRole(authHeader, supabaseAdmin)
+    const { email = 'superadmin@nkkk.ru', password = 'superadmin123', name = 'Главный администратор' } = await req.json()
 
-    const { name, email, password, roleIds, permissionIds = [] } = await req.json()
+    console.log('Creating super admin:', { email, name })
 
-    // Validate required fields
-    if (!name || !email || !password || (!roleIds?.length && !permissionIds?.length)) {
+    // Проверяем, существует ли уже главный администратор
+    const { data: existingSuperAdmin, error: checkError } = await supabaseAdmin
+      .from('users')
+      .select(`
+        id,
+        user_roles!inner(
+          role:admin_roles!inner(name)
+        )
+      `)
+      .eq('user_roles.is_active', true)
+      .eq('user_roles.role.name', 'super_admin')
+      .maybeSingle()
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('Error checking existing super admin:', checkError)
+      throw new Error(`Ошибка проверки существующего главного администратора: ${checkError.message}`)
+    }
+
+    if (existingSuperAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Отсутствуют обязательные поля' }),
+        JSON.stringify({ 
+          success: false,
+          message: 'Главный администратор уже существует в системе'
+        }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
-
-    console.log('Creating admin:', { name, email, roleIds, permissionIds })
 
     // 1. Создаем пользователя в Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -81,7 +66,7 @@ serve(async (req) => {
       email_confirm: true,
       user_metadata: {
         name,
-        role: 'admin'
+        role: 'super_admin'
       }
     })
 
@@ -97,7 +82,7 @@ serve(async (req) => {
     }
 
     const userId = authData.user.id
-    console.log('Admin user created with ID:', userId)
+    console.log('Super admin user created with ID:', userId)
 
     try {
       // 2. Создаем запись в таблице users
@@ -107,7 +92,7 @@ serve(async (req) => {
           id: userId,
           email,
           name,
-          role: 'admin'
+          role: 'super_admin'
         }])
 
       if (userError) {
@@ -115,49 +100,36 @@ serve(async (req) => {
         throw userError
       }
 
-      console.log('Admin record created in users table')
+      console.log('Super admin record created in users table')
 
-      // 3. Назначаем роли администратору
-      if (roleIds && roleIds.length > 0) {
-        const userRoleInserts = roleIds.map(roleId => ({
-          user_id: userId,
-          role_id: roleId,
-          assigned_by: currentUser.id,
-          is_active: true
-        }))
+      // 3. Получаем ID роли super_admin
+      const { data: superAdminRole, error: roleError } = await supabaseAdmin
+        .from('admin_roles')
+        .select('id')
+        .eq('name', 'super_admin')
+        .single()
 
-        const { error: rolesError } = await supabaseAdmin
-          .from('user_roles')
-          .insert(userRoleInserts)
-
-        if (rolesError) {
-          console.error('User roles error:', rolesError)
-          throw rolesError
-        }
-
-        console.log('Admin roles assigned successfully')
+      if (roleError || !superAdminRole) {
+        console.error('Super admin role not found:', roleError)
+        throw new Error('Роль super_admin не найдена в системе')
       }
 
-      // 4. Назначаем дополнительные разрешения администратору
-      if (permissionIds && permissionIds.length > 0) {
-        const userPermissionInserts = permissionIds.map(permissionId => ({
+      // 4. Назначаем роль super_admin
+      const { error: roleAssignError } = await supabaseAdmin
+        .from('user_roles')
+        .insert([{
           user_id: userId,
-          permission_id: permissionId,
-          assigned_by: currentUser.id,
+          role_id: superAdminRole.id,
+          assigned_by: userId,
           is_active: true
-        }))
+        }])
 
-        const { error: permissionsError } = await supabaseAdmin
-          .from('user_permissions')
-          .insert(userPermissionInserts)
-
-        if (permissionsError) {
-          console.error('User permissions error:', permissionsError)
-          throw permissionsError
-        }
-
-        console.log('Admin permissions assigned successfully')
+      if (roleAssignError) {
+        console.error('Role assignment error:', roleAssignError)
+        throw roleAssignError
       }
+
+      console.log('Super admin role assigned successfully')
 
       // 5. Получаем полные данные созданного администратора
       const { data: adminData, error: fetchError } = await supabaseAdmin
@@ -173,7 +145,7 @@ serve(async (req) => {
         .single()
 
       if (fetchError) {
-        console.error('Error fetching created admin:', fetchError)
+        console.error('Error fetching created super admin:', fetchError)
         throw fetchError
       }
 
@@ -183,10 +155,10 @@ serve(async (req) => {
 
       if (permissionsError) {
         console.error('Error fetching user permissions:', permissionsError)
-        throw permissionsError
+        // Не критично, продолжаем без разрешений
       }
 
-      const admin: AdminUser = {
+      const superAdmin = {
         id: adminData.id,
         email: adminData.email,
         name: adminData.name,
@@ -199,8 +171,12 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Администратор успешно создан',
-          admin
+          message: 'Главный администратор успешно создан',
+          admin: superAdmin,
+          credentials: {
+            email,
+            password
+          }
         }),
         { 
           status: 200, 
@@ -210,7 +186,7 @@ serve(async (req) => {
 
     } catch (error) {
       // Очищаем пользователя из Auth если что-то пошло не так
-      console.error('Error during admin creation, cleaning up auth user:', error)
+      console.error('Error during super admin creation, cleaning up auth user:', error)
       await supabaseAdmin.auth.admin.deleteUser(userId)
       throw error
     }
@@ -218,12 +194,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Unexpected error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Внутренняя ошибка сервера'
-    const statusCode = errorMessage.includes('прав доступа') || errorMessage.includes('токен') ? 403 : 500
     
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { 
-        status: statusCode, 
+        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )

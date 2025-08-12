@@ -191,6 +191,7 @@ export const createAdmin = async (adminData: {
   email: string;
   password: string;
   roleIds: string[];
+  permissionIds?: string[];
 }): Promise<AdminUser> => {
   try {
     const result = await callEdgeFunction('create-admin', adminData);

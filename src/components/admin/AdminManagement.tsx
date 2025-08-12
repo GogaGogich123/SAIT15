@@ -59,10 +59,12 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
     name: '',
     email: '',
     password: '',
-    roleIds: [] as string[]
+    roleIds: [] as string[],
+    permissionIds: [] as string[]
   });
 
   const [editRolesForm, setEditRolesForm] = useState<string[]>([]);
+  const [editPermissionsForm, setEditPermissionsForm] = useState<string[]>([]);
 
   const permissionCategories = getPermissionCategories();
 
@@ -93,7 +95,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
   }, [isSuperAdmin]);
 
   const handleCreateAdmin = async () => {
-    if (!adminForm.name || !adminForm.email || !adminForm.password || adminForm.roleIds.length === 0) {
+    if (!adminForm.name || !adminForm.email || !adminForm.password || (adminForm.roleIds.length === 0 && adminForm.permissionIds.length === 0)) {
       showError('Заполните все обязательные поля');
       return;
     }
@@ -102,7 +104,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
       const newAdmin = await createAdmin(adminForm);
       setAdmins([...admins, newAdmin]);
       setCreateAdminModal(false);
-      setAdminForm({ name: '', email: '', password: '', roleIds: [] });
+      setAdminForm({ name: '', email: '', password: '', roleIds: [], permissionIds: [] });
       success('Администратор успешно создан');
     } catch (error) {
       console.error('Error creating admin:', error);
@@ -369,7 +371,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
 
               <div>
                 <label className="block text-white font-bold mb-4">
-                  Роли <span className="text-red-400">*</span>
+                  Роли
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {roles.map((role) => {
@@ -411,12 +413,66 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
                   })}
                 </div>
               </div>
+
+              <div>
+                <label className="block text-white font-bold mb-4">
+                  Дополнительные разрешения
+                </label>
+                <div className="space-y-4">
+                  {Object.entries(permissionCategories).map(([category, categoryName]) => {
+                    const categoryPermissions = permissions.filter(p => p.category === category);
+                    
+                    if (categoryPermissions.length === 0) return null;
+                    
+                    return (
+                      <div key={category}>
+                        <h4 className="text-lg font-semibold text-white mb-3">{categoryName}:</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {categoryPermissions.map((permission) => (
+                            <label
+                              key={permission.id}
+                              className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
+                                adminForm.permissionIds.includes(permission.id)
+                                  ? 'bg-blue-600/30 border border-blue-400/50 text-white'
+                                  : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={adminForm.permissionIds.includes(permission.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setAdminForm({
+                                      ...adminForm,
+                                      permissionIds: [...adminForm.permissionIds, permission.id]
+                                    });
+                                  } else {
+                                    setAdminForm({
+                                      ...adminForm,
+                                      permissionIds: adminForm.permissionIds.filter(id => id !== permission.id)
+                                    });
+                                  }
+                                }}
+                                className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <div className="flex-1">
+                                <div className="font-semibold">{permission.display_name}</div>
+                                <div className="text-sm opacity-80">{permission.description}</div>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
             
             <div className="flex space-x-4 mt-8">
               <button
                 onClick={handleCreateAdmin}
-                disabled={!adminForm.name || !adminForm.email || !adminForm.password || adminForm.roleIds.length === 0}
+                disabled={!adminForm.name || !adminForm.email || !adminForm.password || (adminForm.roleIds.length === 0 && adminForm.permissionIds.length === 0)}
                 className="flex-1 btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
               >
                 <UserPlus className="h-5 w-5" />
