@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, User, Calendar, Eye, ThumbsUp, Edit, Trash2, Pin, Lock } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { LoadingSpinner } from '../components/LoadingSpinner';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Input from '../components/ui/Input';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
-import { getTopicById, getTopicPosts, createPost, updatePost, deletePost, voteTopic, unvoteTopic } from '../lib/forum';
+import { getTopicById, getTopicPosts, createPost, updatePost, deletePost, castTopicVote, removeTopicVote } from '../lib/forum';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Topic {
@@ -130,10 +130,10 @@ export default function ForumTopicPage() {
 
     try {
       if (hasVoted) {
-        await unvoteTopic(id, cadet.id);
+        await removeTopicVote(id, cadet.id);
         setHasVoted(false);
       } else {
-        await voteTopic(id, cadet.id);
+        await castTopicVote(id, cadet.id);
         setHasVoted(true);
       }
       await loadTopicData();
