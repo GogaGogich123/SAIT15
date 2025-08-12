@@ -338,9 +338,12 @@ const CadetProfile: React.FC = () => {
               <div className="flex items-center space-x-3 mb-6">
                 <Calendar className="h-8 w-8 text-blue-400" />
                 <h2 className="text-3xl font-display font-bold text-white text-shadow">История начислений</h2>
+                <span className="text-lg text-blue-300 font-semibold">
+                  ({scoreHistory.length} записей)
+                </span>
               </div>
               <div className="space-y-6">
-                {scoreHistory.map((score, index) => (
+                {scoreHistory.slice(-10).reverse().map((score, index) => (
                   <motion.div
                     key={score.id}
                     variants={staggerItem}
@@ -358,7 +361,13 @@ const CadetProfile: React.FC = () => {
                            score.category === 'discipline' ? 'Дисциплина' : 'Мероприятия'}
                         </span>
                         <span className="text-base text-blue-200 font-semibold">
-                          {new Date(score.created_at).toLocaleDateString('ru-RU')}
+                          {new Date(score.created_at).toLocaleDateString('ru-RU', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
                       <p className="text-white mt-2 text-lg">{score.description}</p>
@@ -368,6 +377,12 @@ const CadetProfile: React.FC = () => {
                     </div>
                   </motion.div>
                 ))}
+                {scoreHistory.length === 0 && (
+                  <div className="text-center py-12">
+                    <Calendar className="h-16 w-16 text-blue-400 mx-auto mb-4 opacity-50" />
+                    <p className="text-blue-300 text-lg">Пока нет записей о начислении баллов</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
