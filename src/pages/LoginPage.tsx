@@ -75,63 +75,6 @@ const LoginPage: React.FC = () => {
       showError(error instanceof Error ? error.message : 'Ошибка создания администратора');
     } finally {
       setCreatingAdmin(false);
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen flex items-center justify-center relative overflow-hidden"
-    >
-      <div className="absolute inset-0">
-        <AnimatedSVGBackground />
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-slate-800/95 z-10"></div>
-      
-      <div className="relative z-20 max-w-lg w-full mx-4">
-        <motion.div
-          variants={scaleIn}
-          initial="hidden"
-          animate="visible"
-          className="text-center mb-12"
-        >
-          <motion.div 
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            className="mx-auto h-24 w-24 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mb-8 shadow-2xl hover-glow"
-          >
-            <Shield className="h-14 w-14 text-white" />
-          </motion.div>
-          <h2 className="text-5xl font-display font-black text-white mb-4 text-shadow text-glow">Вход в систему</h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-orange-500 mx-auto rounded-full mb-4"></div>
-          <p className="text-xl text-blue-200 font-semibold">Новороссийский казачий кадетский корпус</p>
-        </motion.div>
-
-        <motion.form
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          className="glass-effect rounded-3xl p-12 shadow-2xl border border-white/20 hover-lift"
-          onSubmit={handleSubmit}
-        >
-          <div className="space-y-8">
-            <div>
-              <label htmlFor="email" className="block text-lg font-bold text-white mb-3">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input text-lg"
-                placeholder="Введите ваш email"
-              />
-            </div>
 
             <div>
               <label htmlFor="password" className="block text-lg font-bold text-white mb-3">
