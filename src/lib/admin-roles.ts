@@ -153,14 +153,8 @@ export const checkUserPermission = async (userId: string, permissionName: string
 export const getAdminUsers = async (): Promise<AdminUser[]> => {
   const { data, error } = await supabase
     .from('users')
-    .select(`
-      *,
-      user_roles!inner(
-        role:admin_roles(*)
-      )
-    `)
+    .select('id, email, name, role, created_at')
     .in('role', ['admin', 'super_admin'])
-    .eq('user_roles.is_active', true);
   
   if (error) throw error;
   
@@ -168,7 +162,7 @@ export const getAdminUsers = async (): Promise<AdminUser[]> => {
   const adminUsers: AdminUser[] = [];
   
   for (const user of data || []) {
-    const roles = user.user_roles?.map((ur: any) => ur.role).filter(Boolean) || [];
+    const roles = await getUserRoles(user.id);
     const permissions = await getUserPermissions(user.id);
     
     adminUsers.push({
