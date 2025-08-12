@@ -136,8 +136,7 @@ const ScoreManagement: React.FC = () => {
       await updateCadetScores(form.cadetId, category, form.points);
       
       // Обновляем список кадетов
-      const updatedCadets = await getCadets();
-      setCadets(updatedCadets);
+      await fetchCadets();
       
       // Очищаем форму
       setForms(prev => ({
@@ -154,6 +153,16 @@ const ScoreManagement: React.FC = () => {
     }
   };
 
+  const fetchCadets = async () => {
+    try {
+      const cadetsData = await getCadets();
+      setCadets(cadetsData);
+      setFilteredCadets(cadetsData);
+    } catch (error) {
+      console.error('Error fetching cadets:', error);
+      showError('Ошибка загрузки кадетов');
+    }
+  };
   const getSelectedCadet = (category: string) => {
     const form = forms[category];
     return cadets.find(c => c.id === form.cadetId);
@@ -205,13 +214,7 @@ const ScoreManagement: React.FC = () => {
       </motion.div>
 
       {/* Active Tab Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-8"
-      >
+      <div className="space-y-8">
         {/* Tab Header */}
         <div className={`card-gradient ${tabs.find(t => t.key === activeTab)?.color} p-8 text-center`}>
           <div className="flex items-center justify-center space-x-4 mb-4">
@@ -523,7 +526,7 @@ const ScoreManagement: React.FC = () => {
               ))}
           </div>
         </motion.div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 };
