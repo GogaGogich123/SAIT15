@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import Button from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Input } from '../ui';
 import Card from '../ui/Card';
 import { Badge } from '../ui';
 import { Search, Plus, Edit, Trash2, Award, Users } from 'lucide-react';
