@@ -27,16 +27,6 @@ const RatingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const platoons = ['7-1', '7-2', '8-1', '8-2', '9-1', '9-2', '10-1', '10-2', '11-1', '11-2'];
-  const squads = [1, 2, 3];
-
-  const filteredCadets = cadets.filter(cadet => {
-    const matchesSearch = cadet.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPlatoon = selectedPlatoon === 'all' || cadet.platoon === selectedPlatoon;
-    const matchesSquad = selectedSquad === 'all' || cadet.squad.toString() === selectedSquad;
-    return matchesSearch && matchesPlatoon && matchesSquad;
-  });
-
   // Debug logging for filters
   useEffect(() => {
     console.log('Filter state changed:', {
@@ -48,6 +38,9 @@ const RatingPage: React.FC = () => {
       filteredCount: filteredCadets.length
     });
   }, [selectedCategory, selectedPlatoon, selectedSquad, searchTerm, cadets.length, filteredCadets.length]);
+
+  const platoons = ['7-1', '7-2', '8-1', '8-2', '9-1', '9-2', '10-1', '10-2', '11-1', '11-2'];
+  const squads = [1, 2, 3];
 
   useEffect(() => {
     const fetchCadets = async () => {
@@ -102,6 +95,13 @@ const RatingPage: React.FC = () => {
     { key: 'discipline', name: 'Дисциплина', icon: Target, color: 'from-red-500 to-pink-500' },
     { key: 'events', name: 'Мероприятия', icon: Users, color: 'from-green-500 to-emerald-500' },
   ];
+
+  const filteredCadets = cadets.filter(cadet => {
+    const matchesSearch = cadet.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlatoon = selectedPlatoon === 'all' || cadet.platoon === selectedPlatoon;
+    const matchesSquad = selectedSquad === 'all' || cadet.squad.toString() === selectedSquad;
+    return matchesSearch && matchesPlatoon && matchesSquad;
+  });
 
   // Sort cadets by selected category
   const sortedCadets = [...filteredCadets].sort((a, b) => {
