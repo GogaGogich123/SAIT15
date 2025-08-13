@@ -138,6 +138,12 @@ const AdminPage: React.FC = () => {
   });
 
   const handleSubmitAwardAchievement = async (cadetId: string, achievementId: string) => {
+    // Check if user has permission to award achievements
+    if (!hasPermission('award_achievements')) {
+      alert('У вас недостаточно прав для присуждения достижений');
+      return;
+    }
+
     try {
       await awardAchievement(cadetId, achievementId);
       
@@ -516,7 +522,7 @@ const AdminPage: React.FC = () => {
               <div className="mb-12">
                 <AdminQuickActions
                 onCreateAchievement={handleCreateAchievement}
-                onAwardAchievement={handleAwardAchievement}
+                onAwardAchievement={hasPermission('award_achievements') ? handleAwardAchievement : undefined}
                 onAddScore={handleAddScore}
                 onCreateNews={handleCreateNews}
                 onCreateCadet={handleCreateCadet}
