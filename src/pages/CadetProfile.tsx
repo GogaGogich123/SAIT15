@@ -52,7 +52,11 @@ const CadetProfile: React.FC = () => {
 
   useEffect(() => {
     const fetchCadetData = async () => {
-      if (!id) return;
+      if (!id || id === 'undefined' || id.trim() === '') {
+        setError('Неверный ID кадета');
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
