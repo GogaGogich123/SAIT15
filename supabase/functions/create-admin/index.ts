@@ -158,23 +158,33 @@ Deno.serve(async (req) => {
         console.log('Admin permissions assigned successfully')
       }
 
-      // 5. Получаем полные данные созданного администратора
-      const { data: adminData, error: fetchError } = await supabaseAdmin
+      // 5. Получаем данные созданного администратора из таблицы users
+      const { data: adminData, error: fetchUserError } = await supabaseAdmin
         .from('users')
-        .select(`
-          *,
-          user_roles!inner(
-            role:admin_roles(*)
-          )
-        `)
+        .select('*')
         .eq('id', userId)
-        .eq('user_roles.is_active', true)
         .single()
 
-      if (fetchError) {
-        console.error('Error fetching created admin:', fetchError)
-        throw fetchError
+      if (fetchUserError) {
+        console.error('Error fetching created admin user:', fetchUserError)
+        throw fetchUserError
       }
+
+      // Получаем роли пользователя
+      const { data: userRolesData, error: fetchRolesError } = await supabaseAdmin
+        .from('user_roles')
+        .select(`
+          role:admin_roles(*)
+        `)
+        .eq('user_id', userId)
+        .eq('is_active', true)
+
+      if (fetchRolesError) {
+        console.error('Error fetching user roles:', fetchRolesError)
+        throw fetchRolesError
+      }
+      
+      const roles = userRolesData?.map((item: any) => item.role).filter(Boolean) || []
 
       // Получаем разрешения пользователя
       const { data: permissions, error: permissionsError } = await supabaseAdmin
@@ -185,12 +195,13 @@ Deno.serve(async (req) => {
         throw permissionsError
       }
 
-      const admin: AdminUser = {
+      // Собираем объект admin
+      const admin = {
         id: adminData.id,
         email: adminData.email,
         name: adminData.name,
         role: adminData.role,
-        roles: adminData.user_roles?.map((ur: any) => ur.role).filter(Boolean) || [],
+        roles: roles,
         permissions: permissions || [],
         created_at: adminData.created_at
       }
