@@ -211,12 +211,21 @@ Deno.serve(async (req) => {
       // Очищаем пользователя из Auth если что-то пошло не так
       console.error('Error during admin creation, cleaning up auth user:', error)
       await supabaseAdmin.auth.admin.deleteUser(userId)
-      throw error
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при создании администратора'
+      console.error('Detailed error:', error)
+      return new Response(
+        JSON.stringify({ error: `Ошибка при создании администратора: ${errorMessage}` }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
   } catch (error) {
     console.error('Unexpected error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Внутренняя ошибка сервера'
+    console.error('Full error details:', error)
     const statusCode = errorMessage.includes('прав доступа') || errorMessage.includes('токен') ? 403 : 500
     
     return new Response(

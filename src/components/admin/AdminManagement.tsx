@@ -95,20 +95,31 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
   }, [isSuperAdmin]);
 
   const handleCreateAdmin = async () => {
+    console.log('handleCreateAdmin called with:', adminForm);
+    
     if (!adminForm.name || !adminForm.email || !adminForm.password || (adminForm.roleIds.length === 0 && adminForm.permissionIds.length === 0)) {
+      console.log('Validation failed:', {
+        name: !adminForm.name,
+        email: !adminForm.email,
+        password: !adminForm.password,
+        noRolesOrPermissions: adminForm.roleIds.length === 0 && adminForm.permissionIds.length === 0
+      });
       showError('Заполните все обязательные поля');
       return;
     }
 
     try {
+      console.log('Attempting to create admin...');
       const newAdmin = await createAdmin(adminForm);
+      console.log('Admin created successfully:', newAdmin);
       setAdmins([...admins, newAdmin]);
       setCreateAdminModal(false);
       setAdminForm({ name: '', email: '', password: '', roleIds: [], permissionIds: [] });
       success('Администратор успешно создан');
     } catch (error) {
       console.error('Error creating admin:', error);
-      showError('Ошибка создания администратора');
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      showError(`Ошибка создания администратора: ${errorMessage}`);
     }
   };
 
