@@ -178,63 +178,6 @@ const LoginPage: React.FC = () => {
               )}
             </motion.button>
           </div>
-
-          <div className="mt-12 pt-8 border-t border-white/20">
-            <div className="text-blue-200">
-              <p className="mb-4 font-bold text-lg">Тестовые учетные записи:</p>
-              
-              {/* Create Super Admin Button */}
-              <motion.div 
-                whileHover={{ scale: 1.02 }}
-                className="glass-effect rounded-xl p-4 hover-lift mb-4 border border-yellow-400/30"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <strong className="text-yellow-300">Создать главного администратора:</strong><br />
-                    <span className="text-sm">Email: superadmin@nkkk.ru | Пароль: superadmin123</span>
-                  </div>
-                  <button
-                    onClick={handleCreateSuperAdmin}
-                    disabled={creatingAdmin}
-                    className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 flex items-center space-x-2 disabled:cursor-not-allowed"
-                  >
-                    {creatingAdmin ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                      <span>Создать</span>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-              
-              <div className="space-y-4">
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  className="glass-effect rounded-xl p-4 hover-lift"
-                >
-                  <strong>Главный администратор:</strong><br />
-                  Email: superadmin@nkkk.ru<br />
-                  Пароль: superadmin123
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  className="glass-effect rounded-xl p-4 hover-lift"
-                >
-                  <strong>Администратор:</strong><br />
-                  Email: admin@nkkk.ru<br />
-                  Пароль: admin123
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.02 }}
-                  className="glass-effect rounded-xl p-4 hover-lift"
-                >
-                  <strong>Кадет:</strong><br />
-                  Email: cadet@nkkk.ru<br />
-                  Пароль: cadet123
-                </motion.div>
-              </div>
-            </div>
-          </div>
         </motion.form>
       </div>
     </motion.div>

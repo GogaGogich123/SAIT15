@@ -225,7 +225,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
 
       {/* Admins List */}
       <motion.div
-        variants={staggerContainer}
+        className="glass-effect rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         {admins.map((admin) => {

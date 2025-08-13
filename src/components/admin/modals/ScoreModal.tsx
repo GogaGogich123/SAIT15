@@ -132,7 +132,7 @@ const ScoreModal: React.FC<ScoreModalProps> = ({
         initial={{ scale: 0.8, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.8, opacity: 0, y: 20 }}
-        className="glass-effect rounded-3xl max-w-3xl w-full p-8 shadow-2xl border border-white/20"
+        className="glass-effect rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl border border-white/20"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
