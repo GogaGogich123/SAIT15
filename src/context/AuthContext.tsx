@@ -78,6 +78,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
 
+          // Если это кадет, получаем cadetId из таблицы cadets
+          if (userData.role === 'cadet') {
+            try {
+              const { data: cadetData, error: cadetError } = await supabase
+                .from('cadets')
+                .select('id, platoon, squad')
+                .eq('auth_user_id', authData.user.id)
+                .maybeSingle();
+
+              console.log('AuthContext: Cadet lookup for user role cadet:', { cadetData, cadetError, authUserId: authData.user.id });
+              
+              if (!cadetError && cadetData) {
+                userObj.cadetId = cadetData.id;
+                userObj.platoon = cadetData.platoon;
+                userObj.squad = cadetData.squad;
+                console.log('AuthContext: Added cadet info to user object:', { cadetId: cadetData.id, platoon: cadetData.platoon, squad: cadetData.squad });
+              } else {
+                console.error('AuthContext: Failed to find cadet data for user with role cadet:', { authUserId: authData.user.id, cadetError });
+              }
+            } catch (cadetLookupError) {
+              console.error('AuthContext: Error looking up cadet data:', cadetLookupError);
+            }
+          }
+
           console.log('AuthContext: User data from users table:', userData);
           setUser(userObj);
           return true;
