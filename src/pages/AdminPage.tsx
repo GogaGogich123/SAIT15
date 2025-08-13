@@ -32,10 +32,6 @@ import AwardAchievementModal from '../components/admin/modals/AwardAchievementMo
 import { 
   getCadets, 
   getAchievements, 
-  addAchievement, 
-  updateAchievement, 
-  deleteAchievement,
-  awardAchievement,
   addScoreHistory,
   updateCadetScores,
   addNews,
@@ -47,6 +43,12 @@ import {
   type Achievement,
   type News
 } from '../lib/supabase';
+import {
+  createAchievement,
+  updateAchievement,
+  deleteAchievement,
+  awardAchievement
+} from '../lib/admin-achievements';
 import { 
   getEvents,
   createEvent,
@@ -137,7 +139,7 @@ const AdminPage: React.FC = () => {
 
   const handleSubmitAwardAchievement = async (cadetId: string, achievementId: string) => {
     try {
-      await awardAchievement(cadetId, achievementId, user?.id || '');
+      await awardAchievement(cadetId, achievementId);
       
       // Обновляем данные
       const [cadetsData, analyticsData] = await Promise.all([
@@ -212,13 +214,13 @@ const AdminPage: React.FC = () => {
   const handleSubmitAchievement = async () => {
     try {
       if (achievementModal.isEditing && achievementModal.achievement) {
-        await updateAchievement(achievementModal.achievement.id, achievementForm);
+        const updatedAchievement = await updateAchievement(achievementModal.achievement.id, achievementForm);
         setAchievements(achievements.map(a => 
-          a.id === achievementModal.achievement!.id ? { ...a, ...achievementForm } : a
+          a.id === achievementModal.achievement!.id ? updatedAchievement : a
         ));
         alert('Достижение обновлено');
       } else {
-        const newAchievement = await addAchievement(achievementForm);
+        const newAchievement = await createAchievement(achievementForm);
         setAchievements([...achievements, newAchievement]);
         alert('Достижение создано');
       }

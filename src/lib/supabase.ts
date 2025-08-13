@@ -405,54 +405,6 @@ export const getAchievements = async (): Promise<Achievement[]> => {
   return data || [];
 };
 
-export const addAchievement = async (achievementData: Omit<Achievement, 'id' | 'created_at'>): Promise<Achievement> => {
-  const { data, error } = await supabase
-    .from('achievements')
-    .insert([{
-      title: achievementData.title,
-      description: achievementData.description,
-      category: achievementData.category,
-      icon: achievementData.icon,
-      color: achievementData.color
-    }])
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
-};
-
-export const updateAchievement = async (id: string, updates: Partial<Achievement>): Promise<void> => {
-  const { error } = await supabase
-    .from('achievements')
-    .update(updates)
-    .eq('id', id);
-  
-  if (error) throw error;
-};
-
-export const deleteAchievement = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('achievements')
-    .delete()
-    .eq('id', id);
-  
-  if (error) throw error;
-};
-
-export const awardAchievement = async (cadetId: string, achievementId: string, awardedBy: string): Promise<void> => {
-  const { error } = await supabase
-    .from('cadet_achievements')
-    .insert([{
-      cadet_id: cadetId,
-      achievement_id: achievementId,
-      awarded_by: awardedBy,
-      awarded_date: new Date().toISOString()
-    }]);
-  
-  if (error) throw error;
-};
-
 // Score management functions
 export const addScoreHistory = async (scoreData: Omit<ScoreHistory, 'id' | 'created_at'>): Promise<void> => {
   const { error } = await supabase
