@@ -154,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: 'cadet',
         platoon: '10-1',
         squad: 2,
-        cadetId: '00000000-0000-0000-0000-000000000001'
+        cadetId: '00000000-0000-0000-0000-000000000003'
       });
       console.log('Cadet user logged in successfully');
       return true;

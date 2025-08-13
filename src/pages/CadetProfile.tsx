@@ -52,8 +52,16 @@ const CadetProfile: React.FC = () => {
 
   useEffect(() => {
     const fetchCadetData = async () => {
-      if (!id || id === 'undefined' || id.trim() === '') {
+      if (!id || id === 'undefined' || id.trim() === '' || id === 'null') {
         setError('Неверный ID кадета');
+        setLoading(false);
+        return;
+      }
+      
+      // Проверяем, является ли ID валидным UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(id)) {
+        setError('Неверный формат ID кадета');
         setLoading(false);
         return;
       }
@@ -63,6 +71,13 @@ const CadetProfile: React.FC = () => {
         
         // Получаем данные кадета
         const cadetData = await getCadetById(id);
+        
+        if (!cadetData) {
+          setError('Кадет не найден');
+          setLoading(false);
+          return;
+        }
+        
         setCadet(cadetData);
         
         // Получаем баллы кадета
