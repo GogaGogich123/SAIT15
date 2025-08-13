@@ -23,6 +23,7 @@ import AdminStats from '../components/admin/AdminStats';
 import AdminQuickActions from '../components/admin/AdminQuickActions';
 import { ScoreManagement } from '../components/admin/ScoreManagement';
 import AdminManagement from '../components/admin/AdminManagement';
+import TaskManagement from '../components/admin/TaskManagement';
 import AchievementModal from '../components/admin/modals/AchievementModal';
 import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
@@ -763,6 +764,18 @@ const AdminPage: React.FC = () => {
 
               {activeTab === 'scores' && (hasPermission('manage_scores_study') || hasPermission('manage_scores_discipline') || hasPermission('manage_scores_events') || hasPermission('manage_scores')) && (
                 <ScoreManagement />
+              )}
+
+              {activeTab === 'tasks' && hasPermission('manage_tasks') && (
+                <TaskManagement />
+              )}
+
+              {activeTab === 'tasks' && !hasPermission('manage_tasks') && (
+                <div className="text-center py-12">
+                  <CheckSquare className="h-16 w-16 text-red-400 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold text-white mb-2">Доступ запрещен</h3>
+                  <p className="text-blue-200">У вас нет прав для управления заданиями</p>
+                </div>
               )}
             </>
           )}
