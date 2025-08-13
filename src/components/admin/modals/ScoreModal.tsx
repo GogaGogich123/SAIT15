@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, Save, X, Award, BookOpen, Users, Star, TrendingUp } from 'lucide-react';
+import { Target, Save, X, Award, BookOpen, Users, Star, TrendingUp, Trophy } from 'lucide-react';
 import { Cadet } from '../../../lib/supabase';
 import { updateCadetScoresAdmin } from '../../../lib/admin';
 import { useToast } from '../../../hooks/useToast';
@@ -20,6 +20,46 @@ interface ScoreModalProps {
   cadets: Cadet[];
   onSuccess?: () => void;
 }
+
+// Helper functions
+const getCategoryColor = (category: 'study' | 'discipline' | 'events'): string => {
+  switch (category) {
+    case 'study':
+      return 'from-blue-500 to-blue-700';
+    case 'discipline':
+      return 'from-red-500 to-red-700';
+    case 'events':
+      return 'from-green-500 to-green-700';
+    default:
+      return 'from-gray-500 to-gray-700';
+  }
+};
+
+const getCategoryIcon = (category: 'study' | 'discipline' | 'events') => {
+  switch (category) {
+    case 'study':
+      return BookOpen;
+    case 'discipline':
+      return Target;
+    case 'events':
+      return Users;
+    default:
+      return Trophy;
+  }
+};
+
+const getCategoryName = (category: 'study' | 'discipline' | 'events'): string => {
+  switch (category) {
+    case 'study':
+      return 'Учёба';
+    case 'discipline':
+      return 'Дисциплина';
+    case 'events':
+      return 'Мероприятия';
+    default:
+      return 'Неизвестно';
+  }
+};
 
 const ScoreModal: React.FC<ScoreModalProps> = ({
   isOpen,
