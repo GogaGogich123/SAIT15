@@ -1,5 +1,37 @@
 import { supabase } from './supabase';
 
+// Функция для получения токена авторизации
+const getAuthToken = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Пользователь не авторизован');
+  }
+  return session.access_token;
+};
+
+// Функция для вызова Edge Function
+const callEdgeFunction = async (functionName: string, payload: any = {}, method: string = 'POST') => {
+  const token = await getAuthToken();
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+  }
+
+  return data;
+};
+
 // Types
 export interface Task {
   id: string;
@@ -172,37 +204,22 @@ export const isTaskTaken = async (taskId: string, cadetId: string): Promise<bool
 
 // Admin functions
 export const createTask = async (taskData: Omit<Task, 'id' | 'current_participants' | 'created_at' | 'updated_at'>): Promise<Task> => {
-  const { data, error } = await supabase
-    .from('tasks')
-    .insert([{
-      title: taskData.title,
-      description: taskData.description,
-      category: taskData.category,
-      difficulty: taskData.difficulty,
-      points: taskData.points,
-      deadline: taskData.deadline,
-      status: taskData.status,
-      max_participants: taskData.max_participants,
-      abandon_penalty: taskData.abandon_penalty,
-      is_active: taskData.is_active
-    }])
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
+  try {
+    const result = await callEdgeFunction('create-task', taskData);
+    return result.task;
+  } catch (error) {
+    console.error('Create task failed', error);
+    throw error;
+  }
 };
 
 export const updateTask = async (taskId: string, updates: Partial<Task>): Promise<void> => {
-  const { error } = await supabase
-    .from('tasks')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', taskId);
-  
-  if (error) throw error;
+  try {
+    await callEdgeFunction('update-task', { taskId, updates }, 'PUT');
+  } catch (error) {
+    console.error('Update task failed', error);
+    throw error;
+  }
 };
 
 export const deleteTask = async (taskId: string): Promise<void> => {
