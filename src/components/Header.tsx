@@ -89,18 +89,6 @@ const Header: React.FC = () => {
                   <SearchBar placeholder="Поиск кадетов..." />
                 </div>
                 
-                {/* Notifications */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="btn-icon"
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 bg-error-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    3
-                  </span>
-                </motion.button>
-                
                 {user.role === 'cadet' && (
                   <>
                     {console.log('Header: user.cadetId for profile link:', user.cadetId)}

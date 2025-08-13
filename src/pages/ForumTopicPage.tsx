@@ -16,7 +16,6 @@ import {
 import { useAuth } from '../context/AuthContext';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useToast } from '../hooks/useToast';
 import { 
   getTopicById, 
   getPostsByTopic, 
@@ -33,7 +32,6 @@ const ForumTopicPage: React.FC = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { success, error: showError } = useToast();
   
   const [topic, setTopic] = useState<ForumTopic | null>(null);
   const [posts, setPosts] = useState<ForumPost[]>([]);
@@ -86,10 +84,10 @@ const ForumTopicPage: React.FC = () => {
       const newPost = await createPost(id, newPostContent.trim(), user.cadetId);
       setPosts([...posts, newPost]);
       setNewPostContent('');
-      success('Ответ добавлен');
+      alert('Ответ добавлен');
     } catch (err) {
       console.error('Error creating post:', err);
-      showError('Ошибка создания ответа');
+      alert('Ошибка создания ответа');
     } finally {
       setSubmitting(false);
     }
@@ -107,10 +105,10 @@ const ForumTopicPage: React.FC = () => {
       ));
       setEditingPost(null);
       setEditContent('');
-      success('Сообщение обновлено');
+      alert('Сообщение обновлено');
     } catch (err) {
       console.error('Error updating post:', err);
-      showError('Ошибка обновления сообщения');
+      alert('Ошибка обновления сообщения');
     }
   };
 
@@ -120,10 +118,10 @@ const ForumTopicPage: React.FC = () => {
     try {
       await deletePost(postId);
       setPosts(posts.filter(post => post.id !== postId));
-      success('Сообщение удалено');
+      alert('Сообщение удалено');
     } catch (err) {
       console.error('Error deleting post:', err);
-      showError('Ошибка удаления сообщения');
+      alert('Ошибка удаления сообщения');
     }
   };
 

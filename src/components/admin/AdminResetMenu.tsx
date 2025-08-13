@@ -15,7 +15,6 @@ import {
   Users,
   UserX
 } from 'lucide-react';
-import { useToast } from '../../hooks/useToast';
 import { 
   resetScores, 
   resetAchievements, 
@@ -30,7 +29,6 @@ import {
 import { staggerContainer, staggerItem } from '../../utils/animations';
 
 const AdminResetMenu: React.FC = () => {
-  const { success, error: showError } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [selectedPlatoon, setSelectedPlatoon] = useState<string>('');
 
@@ -44,11 +42,11 @@ const AdminResetMenu: React.FC = () => {
     try {
       setLoading('scores');
       await resetScores();
-      success('Все баллы успешно сброшены');
+      alert('Все баллы успешно сброшены');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting scores:', error);
-      showError('Ошибка сброса баллов');
+      alert('Ошибка сброса баллов');
     } finally {
       setLoading(null);
     }
@@ -62,11 +60,11 @@ const AdminResetMenu: React.FC = () => {
     try {
       setLoading('achievements');
       await resetAchievements();
-      success('Все достижения успешно удалены');
+      alert('Все достижения успешно удалены');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting achievements:', error);
-      showError('Ошибка сброса достижений');
+      alert('Ошибка сброса достижений');
     } finally {
       setLoading(null);
     }
@@ -80,11 +78,11 @@ const AdminResetMenu: React.FC = () => {
     try {
       setLoading('news');
       await resetNews();
-      success('Все новости успешно удалены');
+      alert('Все новости успешно удалены');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting news:', error);
-      showError('Ошибка сброса новостей');
+      alert('Ошибка сброса новостей');
     } finally {
       setLoading(null);
     }
@@ -98,11 +96,11 @@ const AdminResetMenu: React.FC = () => {
     try {
       setLoading('events');
       await resetEvents();
-      success('Все события успешно удалены');
+      alert('Все события успешно удалены');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting events:', error);
-      showError('Ошибка сброса событий');
+      alert('Ошибка сброса событий');
     } finally {
       setLoading(null);
     }
@@ -116,11 +114,11 @@ const AdminResetMenu: React.FC = () => {
     try {
       setLoading('tasks');
       await resetTasks();
-      success('Все задания успешно удалены');
+      alert('Все задания успешно удалены');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting tasks:', error);
-      showError('Ошибка сброса заданий');
+      alert('Ошибка сброса заданий');
     } finally {
       setLoading(null);
     }
@@ -134,11 +132,11 @@ const AdminResetMenu: React.FC = () => {
     try {
       setLoading('forum');
       await resetForum();
-      success('Все данные форума успешно удалены');
+      alert('Все данные форума успешно удалены');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting forum:', error);
-      showError('Ошибка сброса форума');
+      alert('Ошибка сброса форума');
     } finally {
       setLoading(null);
     }
@@ -154,18 +152,18 @@ const AdminResetMenu: React.FC = () => {
     );
 
     if (confirmation !== 'УДАЛИТЬ КАДЕТОВ') {
-      showError('Неверное подтверждение. Операция отменена.');
+      alert('Неверное подтверждение. Операция отменена.');
       return;
     }
 
     try {
       setLoading('cadets');
       await resetCadets();
-      success('Все кадеты успешно удалены');
+      alert('Все кадеты успешно удалены');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting cadets:', error);
-      showError('Ошибка удаления кадетов');
+      alert('Ошибка удаления кадетов');
     } finally {
       setLoading(null);
     }
@@ -173,7 +171,7 @@ const AdminResetMenu: React.FC = () => {
 
   const handleResetCadetsByPlatoon = async () => {
     if (!selectedPlatoon) {
-      showError('Выберите взвод для удаления');
+      alert('Выберите взвод для удаления');
       return;
     }
 
@@ -184,11 +182,11 @@ const AdminResetMenu: React.FC = () => {
     try {
       setLoading('platoon');
       await resetCadetsByPlatoon(selectedPlatoon);
-      success(`Все кадеты из ${selectedPlatoon} взвода успешно удалены`);
+      alert(`Все кадеты из ${selectedPlatoon} взвода успешно удалены`);
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error('Error resetting cadets by platoon:', error);
-      showError('Ошибка удаления кадетов взвода');
+      alert('Ошибка удаления кадетов взвода');
     } finally {
       setLoading(null);
     }
@@ -204,20 +202,20 @@ const AdminResetMenu: React.FC = () => {
     );
 
     if (confirmation !== 'ПОДТВЕРДИТЬ') {
-      showError('Неверное подтверждение. Операция отменена.');
+      alert('Неверное подтверждение. Операция отменена.');
       return;
     }
 
     try {
       setLoading('full');
       await fullReset();
-      success('Полный сброс данных выполнен успешно');
+      alert('Полный сброс данных выполнен успешно');
       setTimeout(() => {
         window.location.href = '/';
       }, 3000);
     } catch (error) {
       console.error('Error performing full reset:', error);
-      showError('Ошибка полного сброса данных');
+      alert('Ошибка полного сброса данных');
     } finally {
       setLoading(null);
     }

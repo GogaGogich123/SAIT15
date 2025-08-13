@@ -393,10 +393,22 @@ const TasksPage: React.FC = () => {
                     </button>
                   </>
                 )}
+                {task.userStatus === 'submitted' && (
+                  <div className="flex-1 flex items-center justify-center text-yellow-400 font-bold text-lg">
+                    <Clock className="h-6 w-6 mr-2" />
+                    На проверке
+                  </div>
+                )}
                 {task.userStatus === 'completed' && (
                   <div className="flex-1 flex items-center justify-center text-green-400 font-bold text-lg">
                     <Trophy className="h-6 w-6 mr-2" />
                     Выполнено
+                  </div>
+                )}
+                {task.userStatus === 'rejected' && (
+                  <div className="flex-1 flex items-center justify-center text-red-400 font-bold text-lg">
+                    <AlertCircle className="h-6 w-6 mr-2" />
+                    Отклонено
                   </div>
                 )}
               </div>

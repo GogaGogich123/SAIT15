@@ -15,7 +15,6 @@ import {
 import { useAuth } from '../context/AuthContext';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useToast } from '../hooks/useToast';
 import { 
   getEvents, 
   registerForEvent, 
@@ -27,7 +26,6 @@ import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
 const EventsPage: React.FC = () => {
   const { user } = useAuth();
-  const { success, error: showError } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -70,7 +68,7 @@ const EventsPage: React.FC = () => {
 
   const handleRegister = async (eventId: string) => {
     if (!user?.cadetId) {
-      showError('Необходимо войти в систему');
+      alert('Необходимо войти в систему');
       return;
     }
 
@@ -78,12 +76,12 @@ const EventsPage: React.FC = () => {
     try {
       const alreadyRegistered = await isRegisteredForEvent(eventId, user.cadetId);
       if (alreadyRegistered) {
-        showError('Вы уже зарегистрированы на это событие');
+        alert('Вы уже зарегистрированы на это событие');
         return;
       }
     } catch (err) {
       console.error('Error checking registration status:', err);
-      showError('Ошибка проверки статуса регистрации');
+      alert('Ошибка проверки статуса регистрации');
       return;
     }
 
@@ -95,10 +93,10 @@ const EventsPage: React.FC = () => {
           ? { ...event, participants_count: event.participants_count + 1 }
           : event
       ));
-      success('Вы успешно зарегистрированы на событие!');
+      alert('Вы успешно зарегистрированы на событие!');
     } catch (err) {
       console.error('Error registering for event:', err);
-      showError('Ошибка регистрации на событие');
+      alert('Ошибка регистрации на событие');
     }
   };
 
@@ -113,10 +111,10 @@ const EventsPage: React.FC = () => {
           ? { ...event, participants_count: Math.max(0, event.participants_count - 1) }
           : event
       ));
-      success('Регистрация отменена');
+      alert('Регистрация отменена');
     } catch (err) {
       console.error('Error canceling registration:', err);
-      showError('Ошибка отмены регистрации');
+      alert('Ошибка отмены регистрации');
     }
   };
 

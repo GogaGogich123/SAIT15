@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
 import ErrorBoundary from './components/ErrorBoundary';
-import NotificationToast from './components/NotificationToast';
 import HomePage from './pages/HomePage';
 import RatingPage from './pages/RatingPage';
 import CadetProfile from './pages/CadetProfile';
@@ -16,14 +15,11 @@ import ForumTopicPage from './pages/ForumTopicPage';
 import CreateTopicPage from './pages/CreateTopicPage';
 import EventsPage from './pages/EventsPage';
 import { AuthProvider } from './context/AuthContext';
-import { useToast } from './hooks/useToast';
 
 const AppContent: React.FC = () => {
-  const { toasts, removeToast } = useToast();
 
   return (
-    <>
-      <div className="min-h-screen gradient-bg">
+    <div className="min-h-screen gradient-bg">
         <Header />
         <AnimatePresence mode="wait">
           <Routes>
@@ -40,9 +36,7 @@ const AppContent: React.FC = () => {
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </AnimatePresence>
-      </div>
-      <NotificationToast toasts={toasts} onRemove={removeToast} />
-    </>
+    </div>
   );
 };
 

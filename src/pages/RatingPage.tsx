@@ -298,7 +298,13 @@ const RatingPage: React.FC = () => {
                     <div className="flex-shrink-0 grid grid-cols-4 gap-4 text-center">
                       <div>
                         <div className="flex items-center justify-center space-x-1">
-                          <span className="text-3xl font-black text-white text-glow">{cadet.scores.total}</span>
+                          <span className="text-3xl font-black text-white text-glow">
+                            {selectedCategory === 'total' ? cadet.scores.total :
+                             selectedCategory === 'study' ? cadet.scores.study :
+                             selectedCategory === 'discipline' ? cadet.scores.discipline :
+                             selectedCategory === 'events' ? cadet.scores.events :
+                             cadet.scores.total}
+                          </span>
                           {(() => {
                             const change = getScoreChange(cadet);
                             if (change > 0) {
@@ -309,7 +315,13 @@ const RatingPage: React.FC = () => {
                             return null;
                           })()}
                         </div>
-                        <div className="text-sm text-blue-300 font-semibold">Общий</div>
+                        <div className="text-sm text-blue-300 font-semibold">
+                          {selectedCategory === 'total' ? 'Общий' :
+                           selectedCategory === 'study' ? 'Учёба' :
+                           selectedCategory === 'discipline' ? 'Дисциплина' :
+                           selectedCategory === 'events' ? 'Мероприятия' :
+                           'Общий'}
+                        </div>
                         {(() => {
                           const change = getScoreChange(cadet);
                           if (change !== 0) {
@@ -322,18 +334,22 @@ const RatingPage: React.FC = () => {
                           return null;
                         })()}
                       </div>
-                      <div>
+                      {selectedCategory === 'total' && (
+                        <>
+                          <div>
                         <div className="text-2xl font-bold text-blue-300">{cadet.scores.study}</div>
                         <div className="text-sm text-blue-400 font-semibold">Учёба</div>
-                      </div>
-                      <div>
+                          </div>
+                          <div>
                         <div className="text-2xl font-bold text-red-300">{cadet.scores.discipline}</div>
                         <div className="text-sm text-red-400 font-semibold">Дисциплина</div>
-                      </div>
-                      <div>
+                          </div>
+                          <div>
                         <div className="text-2xl font-bold text-green-300">{cadet.scores.events}</div>
                         <div className="text-sm text-green-400 font-semibold">Мероприятия</div>
-                      </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

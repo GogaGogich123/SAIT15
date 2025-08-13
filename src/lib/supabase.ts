@@ -114,12 +114,35 @@ export const getCadets = async (): Promise<Cadet[]> => {
   
   const { data, error } = await supabase
     .from('cadets')
-    .select('*')
+    .select(`
+      *,
+      scores:scores(study_score, discipline_score, events_score)
+    `)
     .order('rank', { ascending: true });
   
   if (error) throw error;
   
-  const result = data || [];
+  // Обрабатываем данные и добавляем последние изменения баллов
+  const result = await Promise.all((data || []).map(async (cadet) => {
+    // Получаем последнее изменение баллов
+    const { data: lastScoreChange } = await supabase
+      .from('score_history')
+      .select('points, created_at')
+      .eq('cadet_id', cadet.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return {
+      ...cadet,
+      study_score: cadet.scores?.[0]?.study_score || 0,
+      discipline_score: cadet.scores?.[0]?.discipline_score || 0,
+      events_score: cadet.scores?.[0]?.events_score || 0,
+      last_score_change: lastScoreChange?.points || 0,
+      last_score_change_date: lastScoreChange?.created_at || null
+    };
+  }));
+  
   // Кэшируем результат
   cache.set(CACHE_KEYS.CADETS, result, CACHE_DURATION.MEDIUM);
   

@@ -14,7 +14,6 @@ import {
   Trophy,
   Medal
 } from 'lucide-react';
-import { useToast } from '../../hooks/useToast';
 import { getCadets, getScoreHistory, type Cadet, type ScoreHistory } from '../../lib/supabase';
 import ScoreModal from './modals/ScoreModal';
 import { staggerContainer, staggerItem } from '../../utils/animations';
@@ -26,7 +25,6 @@ export function ScoreManagement() {
   const [selectedCadet, setSelectedCadet] = useState<Cadet | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { success, error: showError } = useToast();
 
   const [scoreForm, setScoreForm] = useState({
     cadetId: '',
@@ -46,7 +44,7 @@ export function ScoreManagement() {
       setCadets(data || []);
     } catch (error) {
       console.error('Error fetching cadets:', error);
-      showError('Ошибка загрузки кадетов');
+      alert('Ошибка загрузки кадетов');
     } finally {
       setLoading(false);
     }

@@ -14,7 +14,6 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import { useToast } from '../../hooks/useToast';
 import { 
   getAdminUsers,
   getAdminRoles,
@@ -38,7 +37,6 @@ interface AdminManagementProps {
 }
 
 const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSuperAdmin }) => {
-  const { success, error: showError } = useToast();
   
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [roles, setRoles] = useState<AdminRole[]>([]);
@@ -92,7 +90,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
         setPermissions(permissionsData);
       } catch (error) {
         console.error('Error loading admin data:', error);
-        showError('Ошибка загрузки данных администраторов');
+        alert('Ошибка загрузки данных администраторов');
       } finally {
         setLoading(false);
       }
@@ -122,11 +120,11 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
       setAdmins([...admins, newAdmin]);
       setCreateAdminModal(false);
       setAdminForm({ name: '', email: '', password: '', roleIds: [], permissionIds: [] });
-      success('Администратор успешно создан');
+      alert('Администратор успешно создан');
     } catch (error) {
       console.error('Error creating admin:', error);
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-      showError(`Ошибка создания администратора: ${errorMessage}`);
+      alert(`Ошибка создания администратора: ${errorMessage}`);
     }
   };
 
@@ -142,16 +140,16 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
       
       setEditRolesModal({ isOpen: false, admin: null });
       setEditRolesForm([]);
-      success('Роли администратора обновлены');
+      alert('Роли администратора обновлены');
     } catch (error) {
       console.error('Error updating admin roles:', error);
-      showError('Ошибка обновления ролей');
+      alert('Ошибка обновления ролей');
     }
   };
 
   const handleDeactivateAdmin = async (adminId: string) => {
     if (adminId === currentUserId) {
-      showError('Нельзя деактивировать самого себя');
+      alert('Нельзя деактивировать самого себя');
       return;
     }
 
@@ -160,10 +158,10 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
     try {
       await deactivateAdmin(adminId);
       setAdmins(admins.filter(admin => admin.id !== adminId));
-      success('Администратор деактивирован');
+      alert('Администратор деактивирован');
     } catch (error) {
       console.error('Error deactivating admin:', error);
-      showError('Ошибка деактивации администратора');
+      alert('Ошибка деактивации администратора');
     }
   };
 
@@ -185,7 +183,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
       setEditPermissionsModal({ isOpen: true, admin });
     } catch (error) {
       console.error('Error fetching direct permissions:', error);
-      showError('Ошибка загрузки разрешений');
+      alert('Ошибка загрузки разрешений');
     }
   };
 
@@ -202,10 +200,10 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
       setEditPermissionsModal({ isOpen: false, admin: null });
       setEditPermissionsForm([]);
       setDirectPermissions([]);
-      success('Разрешения администратора обновлены');
+      alert('Разрешения администратора обновлены');
     } catch (error) {
       console.error('Error updating admin permissions:', error);
-      showError('Ошибка обновления разрешений');
+      alert('Ошибка обновления разрешений');
     }
   };
 

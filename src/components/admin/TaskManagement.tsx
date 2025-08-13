@@ -18,7 +18,6 @@ import {
   XCircle,
   MessageSquare
 } from 'lucide-react';
-import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../context/AuthContext';
 import { 
   getTasks, 
@@ -36,7 +35,6 @@ import { staggerContainer, staggerItem } from '../../utils/animations';
 
 const TaskManagement: React.FC = () => {
   const { user, hasPermission } = useAuth();
-  const { success, error: showError } = useToast();
   
   const [tasks, setTasks] = useState<Task[]>([]);
   const [submissions, setSubmissions] = useState<TaskSubmission[]>([]);
@@ -83,7 +81,7 @@ const TaskManagement: React.FC = () => {
         setSubmissions(submissionsData);
       } catch (error) {
         console.error('Error loading task data:', error);
-        showError('Ошибка загрузки данных заданий');
+        alert('Ошибка загрузки данных заданий');
       } finally {
         setLoading(false);
       }
@@ -92,6 +90,14 @@ const TaskManagement: React.FC = () => {
     loadData();
   }, [hasPermission]);
 
+  const refreshSubmissions = async () => {
+    try {
+      const submissionsData = await getAllTaskSubmissions();
+      setSubmissions(submissionsData);
+    } catch (error) {
+      console.error('Error refreshing submissions:', error);
+    }
+  };
   const handleCreateTask = () => {
     setTaskForm({
       title: '',
@@ -131,16 +137,18 @@ const TaskManagement: React.FC = () => {
         setTasks(tasks.map(t => 
           t.id === taskModal.task!.id ? { ...t, ...taskForm } : t
         ));
-        success('Задание обновлено');
+        alert('Задание обновлено');
       } else {
         const newTask = await createTask(taskForm);
         setTasks([...tasks, newTask]);
-        success('Задание создано');
+        alert('Задание создано');
       }
       setTaskModal({ isOpen: false, isEditing: false, task: null });
+      // Обновляем список отправок после создания/обновления задания
+      await refreshSubmissions();
     } catch (error) {
       console.error('Error with task:', error);
-      showError('Ошибка при работе с заданием');
+      alert('Ошибка при работе с заданием');
     }
   };
 
@@ -150,10 +158,10 @@ const TaskManagement: React.FC = () => {
     try {
       await deleteTask(taskId);
       setTasks(tasks.filter(t => t.id !== taskId));
-      success('Задание удалено');
+      alert('Задание удалено');
     } catch (error) {
       console.error('Error deleting task:', error);
-      showError('Ошибка удаления задания');
+      alert('Ошибка удаления задания');
     }
   };
 
@@ -185,10 +193,12 @@ const TaskManagement: React.FC = () => {
       ));
       
       setReviewModal({ isOpen: false, submission: null });
-      success(`Задание ${status === 'completed' ? 'принято' : 'отклонено'}`);
+      // Обновляем список отправок после проверки
+      await refreshSubmissions();
+      alert(`Задание ${status === 'completed' ? 'принято' : 'отклонено'}`);
     } catch (error) {
       console.error('Error reviewing submission:', error);
-      showError('Ошибка проверки задания');
+      alert('Ошибка проверки задания');
     }
   };
 

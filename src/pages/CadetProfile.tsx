@@ -115,14 +115,41 @@ const CadetProfile: React.FC = () => {
     fetchCadetData();
   }, [id]);
 
-  const scoreHistoryMock = [
-    { month: 'Сен', study: 85, discipline: 80, events: 78, total: 243 },
-    { month: 'Окт', study: 87, discipline: 82, events: 81, total: 250 },
-    { month: 'Ноя', study: 90, discipline: 84, events: 85, total: 259 },
-    { month: 'Дек', study: 92, discipline: 86, events: 88, total: 266 },
-    { month: 'Янв', study: 94, discipline: 87, events: 90, total: 271 },
-    { month: 'Мар', study: 95, discipline: 88, events: 92, total: 275 },
-  ];
+  // Обрабатываем реальные данные истории баллов для графика
+  const processScoreHistory = () => {
+    if (!scoreHistory.length || !scores) return [];
+
+    // Группируем по месяцам
+    const monthlyData: { [key: string]: { study: number, discipline: number, events: number, total: number } } = {};
+    
+    let cumulativeStudy = 0;
+    let cumulativeDiscipline = 0;
+    let cumulativeEvents = 0;
+
+    scoreHistory.forEach(entry => {
+      const date = new Date(entry.created_at);
+      const monthKey = date.toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' });
+      
+      if (entry.category === 'study') cumulativeStudy += entry.points;
+      if (entry.category === 'discipline') cumulativeDiscipline += entry.points;
+      if (entry.category === 'events') cumulativeEvents += entry.points;
+      
+      monthlyData[monthKey] = {
+        study: Math.max(0, cumulativeStudy),
+        discipline: Math.max(0, cumulativeDiscipline),
+        events: Math.max(0, cumulativeEvents),
+        total: Math.max(0, cumulativeStudy + cumulativeDiscipline + cumulativeEvents)
+      };
+    });
+
+    // Преобразуем в массив для графика
+    return Object.entries(monthlyData).map(([month, data]) => ({
+      month,
+      ...data
+    })).slice(-6); // Показываем последние 6 месяцев
+  };
+
+  const chartData = processScoreHistory();
 
   // Получаем достижения от администратора
   const adminAchievements = achievements.filter(a => a.achievement);
@@ -272,7 +299,7 @@ const CadetProfile: React.FC = () => {
               </div>
               <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={scoreHistoryMock}>
+                  <LineChart data={chartData.length > 0 ? chartData : [{ month: 'Нет данных', study: 0, discipline: 0, events: 0, total: 0 }]}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="month" stroke="#9CA3AF" />
                     <YAxis stroke="#9CA3AF" />
@@ -291,6 +318,11 @@ const CadetProfile: React.FC = () => {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+              {chartData.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-blue-300">Недостаточно данных для отображения графика</p>
+                </div>
+              )}
             </motion.div>
 
             {/* Auto Achievements (Ачивки) */}

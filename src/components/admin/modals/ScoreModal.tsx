@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Target, Save, X, Award, BookOpen, Users, Star, TrendingUp, Trophy } from 'lucide-react';
 import { Cadet } from '../../../lib/supabase';
 import { updateCadetScoresAdmin } from '../../../lib/admin';
-import { useToast } from '../../../hooks/useToast';
 
 interface ScoreForm {
   cadetId: string;
@@ -69,7 +68,6 @@ const ScoreModal: React.FC<ScoreModalProps> = ({
   cadets,
   onSuccess
 }) => {
-  const { success, error: showError } = useToast();
   const [submitting, setSubmitting] = React.useState(false);
 
   const selectedCadet = cadets.find(c => c.id === form.cadetId);
@@ -100,19 +98,19 @@ const ScoreModal: React.FC<ScoreModalProps> = ({
 
   const handleSubmit = async () => {
     if (!form.cadetId || !form.description.trim()) {
-      showError('Заполните все обязательные поля');
+      alert('Заполните все обязательные поля');
       return;
     }
 
     try {
       setSubmitting(true);
       await updateCadetScoresAdmin(form.cadetId, form.category, form.points, form.description.trim());
-      success(`Баллы успешно начислены кадету ${selectedCadet?.name}`);
+      alert(`Баллы успешно начислены кадету ${selectedCadet?.name}`);
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Error adding score:', error);
-      showError('Ошибка начисления баллов');
+      alert('Ошибка начисления баллов');
     } finally {
       setSubmitting(false);
     }

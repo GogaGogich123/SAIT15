@@ -5,7 +5,6 @@ import { ArrowLeft, Send, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useToast } from '../hooks/useToast';
 import { 
   getForumCategories, 
   createTopic,
@@ -17,7 +16,6 @@ const CreateTopicPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { success, error: showError } = useToast();
   
   const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -59,11 +57,11 @@ const CreateTopicPage: React.FC = () => {
     try {
       setSubmitting(true);
       const newTopic = await createTopic(selectedCategory, title.trim(), content.trim(), user.cadetId);
-      success('Тема успешно создана');
+      alert('Тема успешно создана');
       navigate(`/forum/topic/${newTopic.id}`);
     } catch (err) {
       console.error('Error creating topic:', err);
-      showError('Ошибка создания темы');
+      alert('Ошибка создания темы');
     } finally {
       setSubmitting(false);
     }

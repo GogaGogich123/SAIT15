@@ -15,7 +15,6 @@ import {
   UserPlus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../hooks/useToast';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AdminTabs from '../components/admin/AdminTabs';
@@ -29,6 +28,7 @@ import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
 import ScoreModal from '../components/admin/modals/ScoreModal';
 import AdminResetMenu from '../components/admin/AdminResetMenu';
+import AwardAchievementModal from '../components/admin/modals/AwardAchievementModal';
 import { 
   getCadets, 
   getAchievements, 
@@ -63,7 +63,6 @@ import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
 const AdminPage: React.FC = () => {
   const { user, isAdmin, isSuperAdmin, hasPermission } = useAuth();
-  const { success, error: showError } = useToast();
   
   // State
   const [activeTab, setActiveTab] = useState('overview');
@@ -85,6 +84,7 @@ const AdminPage: React.FC = () => {
   });
   const [scoreModal, setScoreModal] = useState({ isOpen: false });
   const [newsModal, setNewsModal] = useState({ isOpen: false, isEditing: false, newsItem: null as News | null });
+  const [awardAchievementModal, setAwardAchievementModal] = useState({ isOpen: false });
 
   // Form states
   const [achievementForm, setAchievementForm] = useState({
@@ -135,6 +135,26 @@ const AdminPage: React.FC = () => {
     images: [] as string[]
   });
 
+  const handleSubmitAwardAchievement = async (cadetId: string, achievementId: string) => {
+    try {
+      await awardAchievement(cadetId, achievementId, user?.id || '');
+      
+      // Обновляем данные
+      const [cadetsData, analyticsData] = await Promise.all([
+        getCadets(),
+        getAnalytics()
+      ]);
+      setCadets(cadetsData);
+      setAnalytics(analyticsData);
+      
+      setAwardAchievementModal({ isOpen: false });
+      alert('Достижение успешно присуждено');
+    } catch (error) {
+      console.error('Error awarding achievement:', error);
+      alert('Ошибка присуждения достижения');
+    }
+  };
+
   // Load data
   useEffect(() => {
     if (!isAdmin) return;
@@ -157,7 +177,7 @@ const AdminPage: React.FC = () => {
         setAnalytics(analyticsData);
       } catch (error) {
         console.error('Error loading admin data:', error);
-        showError('Ошибка загрузки данных');
+        alert('Ошибка загрузки данных');
       } finally {
         setLoading(false);
       }
@@ -196,16 +216,16 @@ const AdminPage: React.FC = () => {
         setAchievements(achievements.map(a => 
           a.id === achievementModal.achievement!.id ? { ...a, ...achievementForm } : a
         ));
-        success('Достижение обновлено');
+        alert('Достижение обновлено');
       } else {
         const newAchievement = await addAchievement(achievementForm);
         setAchievements([...achievements, newAchievement]);
-        success('Достижение создано');
+        alert('Достижение создано');
       }
       setAchievementModal({ isOpen: false, isEditing: false, achievement: null });
     } catch (error) {
       console.error('Error with achievement:', error);
-      showError('Ошибка при работе с достижением');
+      alert('Ошибка при работе с достижением');
     }
   };
 
@@ -215,10 +235,10 @@ const AdminPage: React.FC = () => {
     try {
       await deleteAchievement(id);
       setAchievements(achievements.filter(a => a.id !== id));
-      success('Достижение удалено');
+      alert('Достижение удалено');
     } catch (error) {
       console.error('Error deleting achievement:', error);
-      showError('Ошибка удаления достижения');
+      alert('Ошибка удаления достижения');
     }
   };
 
@@ -261,16 +281,16 @@ const AdminPage: React.FC = () => {
           avatar_url: cadetForm.avatar_url
         });
         setCadets(cadets.map(c => c.id === cadetModal.cadet!.id ? updatedCadet : c));
-        success('Кадет обновлен');
+        alert('Кадет обновлен');
       } else {
         const newCadet = await createCadetWithAuth(cadetForm);
         setCadets([...cadets, newCadet]);
-        success('Кадет создан');
+        alert('Кадет создан');
       }
       setCadetModal({ isOpen: false, isEditing: false, cadet: null });
     } catch (error) {
       console.error('Error with cadet:', error);
-      showError('Ошибка при работе с кадетом');
+      alert('Ошибка при работе с кадетом');
     }
   };
 
@@ -280,10 +300,10 @@ const AdminPage: React.FC = () => {
     try {
       await deleteCadet(id);
       setCadets(cadets.filter(c => c.id !== id));
-      success('Кадет удален');
+      alert('Кадет удален');
     } catch (error) {
       console.error('Error deleting cadet:', error);
-      showError('Ошибка удаления кадета');
+      alert('Ошибка удаления кадета');
     }
   };
 
@@ -346,7 +366,7 @@ const AdminPage: React.FC = () => {
         setEvents(events.map(e => 
           e.id === eventModal.event!.id ? { ...e, ...eventForm } : e
         ));
-        success('Событие обновлено');
+        alert('Событие обновлено');
       } else {
         const newEvent = await createEvent({
           ...eventForm,
@@ -356,12 +376,12 @@ const AdminPage: React.FC = () => {
           updated_at: new Date().toISOString()
         });
         setEvents([...events, newEvent]);
-        success('Событие создано');
+        alert('Событие создано');
       }
       setEventModal({ isOpen: false, isEditing: false, event: null, viewMode: 'edit' });
     } catch (error) {
       console.error('Error with event:', error);
-      showError('Ошибка при работе с событием');
+      alert('Ошибка при работе с событием');
     }
   };
 
@@ -371,10 +391,10 @@ const AdminPage: React.FC = () => {
     try {
       await deleteEvent(id);
       setEvents(events.filter(e => e.id !== id));
-      success('Событие удалено');
+      alert('Событие удалено');
     } catch (error) {
       console.error('Error deleting event:', error);
-      showError('Ошибка удаления события');
+      alert('Ошибка удаления события');
     }
   };
 
@@ -415,16 +435,16 @@ const AdminPage: React.FC = () => {
         setNews(news.map(n => 
           n.id === newsModal.newsItem!.id ? { ...n, ...newsForm } : n
         ));
-        success('Новость обновлена');
+        alert('Новость обновлена');
       } else {
         const newNews = await addNews(newsForm);
         setNews([newNews, ...news]);
-        success('Новость создана');
+        alert('Новость создана');
       }
       setNewsModal({ isOpen: false, isEditing: false, newsItem: null });
     } catch (error) {
       console.error('Error with news:', error);
-      showError('Ошибка при работе с новостью');
+      alert('Ошибка при работе с новостью');
     }
   };
 
@@ -434,16 +454,15 @@ const AdminPage: React.FC = () => {
     try {
       await deleteNews(id);
       setNews(news.filter(n => n.id !== id));
-      success('Новость удалена');
+      alert('Новость удалена');
     } catch (error) {
       console.error('Error deleting news:', error);
-      showError('Ошибка удаления новости');
+      alert('Ошибка удаления новости');
     }
   };
 
   const handleAwardAchievement = () => {
-    // Implementation for awarding achievements
-    console.log('Award achievement clicked');
+    setAwardAchievementModal({ isOpen: true });
   };
 
   if (!isAdmin) {
@@ -825,6 +844,14 @@ const AdminPage: React.FC = () => {
               };
               loadData();
             }}
+          />
+
+          <AwardAchievementModal
+            isOpen={awardAchievementModal.isOpen}
+            onClose={() => setAwardAchievementModal({ isOpen: false })}
+            onSubmit={handleSubmitAwardAchievement}
+            cadets={cadets}
+            achievements={achievements}
           />
         </div>
       </div>
