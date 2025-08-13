@@ -333,7 +333,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="glass-effect rounded-3xl max-w-2xl w-full p-8"
+            className="glass-effect rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-3xl font-bold text-white mb-6">Создать администратора</h2>
