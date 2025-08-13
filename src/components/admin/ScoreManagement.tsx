@@ -1,31 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import Button from '../ui/Button';
-import { Input } from '../ui';
-import Card from '../ui/Card';
-import { Badge } from '../ui';
-import { Search, Plus, Edit, Trash2, Award, Users } from 'lucide-react';
-import ScoreModal from './modals/ScoreModal';
+import { motion } from 'framer-motion';
+import { 
+  Search, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Award, 
+  Users, 
+  Target,
+  TrendingUp,
+  Calendar,
+  Star,
+  Trophy,
+  Medal
+} from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
-
-interface Cadet {
-  id: string;
-  name: string;
-  email: string;
-  platoon: string;
-  squad: number;
-  rank: number;
-  total_score: number;
-}
-
-interface ScoreHistory {
-  id: string;
-  category: string;
-  points: number;
-  description: string;
-  created_at: string;
-  awarded_by: string;
-}
+import { getCadets, getScoreHistory, type Cadet, type ScoreHistory } from '../../lib/supabase';
+import ScoreModal from './modals/ScoreModal';
+import { staggerContainer, staggerItem } from '../../utils/animations';
 
 export function ScoreManagement() {
   const [cadets, setCadets] = useState<Cadet[]>([]);
@@ -34,7 +26,14 @@ export function ScoreManagement() {
   const [selectedCadet, setSelectedCadet] = useState<Cadet | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { showToast } = useToast();
+  const { success, error: showError } = useToast();
+
+  const [scoreForm, setScoreForm] = useState({
+    cadetId: '',
+    category: 'study' as 'study' | 'discipline' | 'events',
+    points: 0,
+    description: ''
+  });
 
   useEffect(() => {
     fetchCadets();
@@ -43,16 +42,11 @@ export function ScoreManagement() {
 
   const fetchCadets = async () => {
     try {
-      const { data, error } = await supabase
-        .from('cadets')
-        .select('*')
-        .order('total_score', { ascending: false });
-
-      if (error) throw error;
+      const data = await getCadets();
       setCadets(data || []);
     } catch (error) {
       console.error('Error fetching cadets:', error);
-      showToast('Failed to fetch cadets', 'error');
+      showError('Ошибка загрузки кадетов');
     } finally {
       setLoading(false);
     }
@@ -60,17 +54,21 @@ export function ScoreManagement() {
 
   const fetchScoreHistory = async () => {
     try {
-      const { data, error } = await supabase
-        .from('score_history')
-        .select(`
-          *,
-          cadets(name, platoon)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setScoreHistory(data || []);
+      // Получаем историю баллов для всех кадетов
+      const allHistory: ScoreHistory[] = [];
+      for (const cadet of cadets) {
+        try {
+          const history = await getScoreHistory(cadet.id);
+          allHistory.push(...history);
+        } catch (error) {
+          console.error(`Error fetching history for cadet ${cadet.id}:`, error);
+        }
+      }
+      
+      // Сортируем по дате создания (новые сначала)
+      allHistory.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      setScoreHistory(allHistory.slice(0, 20)); // Показываем последние 20 записей
     } catch (error) {
       console.error('Error fetching score history:', error);
     }
@@ -78,6 +76,12 @@ export function ScoreManagement() {
 
   const handleAddScore = (cadet: Cadet) => {
     setSelectedCadet(cadet);
+    setScoreForm({
+      cadetId: cadet.id,
+      category: 'study',
+      points: 0,
+      description: ''
+    });
     setIsScoreModalOpen(true);
   };
 
@@ -86,137 +90,209 @@ export function ScoreManagement() {
     fetchScoreHistory();
     setIsScoreModalOpen(false);
     setSelectedCadet(null);
+    setScoreForm({
+      cadetId: '',
+      category: 'study',
+      points: 0,
+      description: ''
+    });
   };
 
   const filteredCadets = cadets.filter(cadet =>
     cadet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cadet.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     cadet.platoon.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'study': return 'bg-blue-100 text-blue-800';
-      case 'discipline': return 'bg-green-100 text-green-800';
-      case 'events': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'study': return 'from-blue-500 to-blue-700';
+      case 'discipline': return 'from-red-500 to-red-700';
+      case 'events': return 'from-green-500 to-green-700';
+      default: return 'from-gray-500 to-gray-700';
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'study': return Trophy;
+      case 'discipline': return Target;
+      case 'events': return Users;
+      default: return Star;
+    }
+  };
+
+  const getCategoryName = (category: string) => {
+    switch (category) {
+      case 'study': return 'Учёба';
+      case 'discipline': return 'Дисциплина';
+      case 'events': return 'Мероприятия';
+      default: return category;
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-4"></div>
+        <p className="text-blue-300">Загрузка данных...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Score Management</h2>
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      className="space-y-8"
+    >
+      {/* Header */}
+      <motion.div variants={staggerItem} className="flex justify-between items-center">
+        <div>
+          <h2 className="text-4xl font-bold text-white mb-2">Управление баллами</h2>
+          <p className="text-blue-200 text-lg">Начисляйте и отслеживайте баллы кадетов</p>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300 w-5 h-5" />
+            <input
               type="text"
-              placeholder="Search cadets..."
+              placeholder="Поиск кадетов..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="input pl-12 w-80"
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Cadets List */}
-        <Card className="p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Users className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold">Cadets</h3>
-          </div>
-          
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {filteredCadets.map((cadet) => (
-              <div
-                key={cadet.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <div>
-                      <p className="font-medium text-gray-900">{cadet.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {cadet.platoon} - Squad {cadet.squad}
-                      </p>
+        <motion.div variants={staggerItem} className="xl:col-span-2">
+          <div className="card-hover p-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <Users className="w-8 h-8 text-blue-400" />
+              <h3 className="text-2xl font-bold text-white">Кадеты</h3>
+              <span className="text-blue-300 font-semibold">({filteredCadets.length})</span>
+            </div>
+            
+            <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-hide">
+              {filteredCadets.map((cadet) => (
+                <motion.div
+                  key={cadet.id}
+                  whileHover={{ scale: 1.02, x: 10 }}
+                  className="glass-effect p-6 rounded-xl border border-white/10 hover:border-blue-400/30 transition-all duration-300 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative">
+                        <img
+                          src={cadet.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
+                          alt={cadet.name}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-blue-400/50 group-hover:border-yellow-400/70 transition-colors"
+                        />
+                        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-blue-900 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                          #{cadet.rank}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold text-white group-hover:text-yellow-300 transition-colors">
+                          {cadet.name}
+                        </h4>
+                        <p className="text-blue-300 font-semibold">
+                          {cadet.platoon} взвод
+                        </p>
+                        <p className="text-blue-400 text-sm">
+                          Общий балл: <span className="font-bold text-yellow-400">{cadet.total_score}</span>
+                        </p>
+                      </div>
                     </div>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleAddScore(cadet)}
+                      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-green-500/25"
+                    >
+                      <Award className="w-5 h-5" />
+                      <span>Начислить</span>
+                    </motion.button>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">{cadet.total_score} pts</p>
-                    <p className="text-sm text-gray-500">Rank #{cadet.rank}</p>
-                  </div>
-                  
-                  <Button
-                    onClick={() => handleAddScore(cadet)}
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Award className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </Card>
+        </motion.div>
 
         {/* Recent Score History */}
-        <Card className="p-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Award className="w-5 h-5 text-green-600" />
-            <h3 className="text-lg font-semibold">Recent Score Changes</h3>
-          </div>
-          
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {scoreHistory.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <Badge className={getCategoryColor(entry.category)}>
-                      {entry.category}
-                    </Badge>
-                    <span className={`font-semibold ${entry.points >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {entry.points >= 0 ? '+' : ''}{entry.points} pts
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600">{entry.description}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(entry.created_at).toLocaleDateString()}
-                  </p>
+        <motion.div variants={staggerItem}>
+          <div className="card-hover p-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <Calendar className="w-8 h-8 text-green-400" />
+              <h3 className="text-2xl font-bold text-white">Последние начисления</h3>
+            </div>
+            
+            <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-hide">
+              {scoreHistory.map((entry) => {
+                const CategoryIcon = getCategoryIcon(entry.category);
+                const cadet = cadets.find(c => c.id === entry.cadet_id);
+                
+                return (
+                  <motion.div
+                    key={entry.id}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    className="glass-effect p-4 rounded-xl border border-white/10 hover:border-blue-400/30 transition-all duration-300"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${getCategoryColor(entry.category)}`}>
+                          <CategoryIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-white">{cadet?.name || 'Неизвестный кадет'}</div>
+                          <div className="text-blue-300 text-sm">{getCategoryName(entry.category)}</div>
+                        </div>
+                      </div>
+                      <div className={`text-xl font-black ${entry.points >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {entry.points >= 0 ? '+' : ''}{entry.points}
+                      </div>
+                    </div>
+                    <p className="text-blue-200 text-sm mb-2">{entry.description}</p>
+                    <p className="text-blue-400 text-xs">
+                      {new Date(entry.created_at).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </motion.div>
+                );
+              })}
+              
+              {scoreHistory.length === 0 && (
+                <div className="text-center py-12">
+                  <Calendar className="h-16 w-16 text-blue-400 mx-auto mb-4 opacity-50" />
+                  <p className="text-blue-300 text-lg">Пока нет записей о начислении баллов</p>
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-        </Card>
+        </motion.div>
       </div>
 
       {/* Score Modal */}
-      {isScoreModalOpen && selectedCadet && (
-        <ScoreModal
-          cadet={selectedCadet}
-          onClose={() => {
-            setIsScoreModalOpen(false);
-            setSelectedCadet(null);
-          }}
-          onScoreAdded={handleScoreAdded}
-        />
-      )}
-    </div>
+      <ScoreModal
+        isOpen={isScoreModalOpen}
+        onClose={() => {
+          setIsScoreModalOpen(false);
+          setSelectedCadet(null);
+        }}
+        form={scoreForm}
+        setForm={setScoreForm}
+        cadets={cadets}
+        onSuccess={handleScoreAdded}
+      />
+    </motion.div>
   );
 }
