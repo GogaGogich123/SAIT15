@@ -761,7 +761,7 @@ const AdminPage: React.FC = () => {
                 <AdminResetMenu />
               )}
 
-              {activeTab === 'scores' && (hasPermission('manage_scores_study') || hasPermission('manage_scores_discipline') || hasPermission('manage_scores_events')) && (
+              {activeTab === 'scores' && (hasPermission('manage_scores_study') || hasPermission('manage_scores_discipline') || hasPermission('manage_scores_events') || hasPermission('manage_scores')) && (
                 <ScoreManagement />
               )}
             </>

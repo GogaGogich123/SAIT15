@@ -21,9 +21,11 @@ import {
   getAdminPermissions,
   createAdmin,
   updateAdminRoles,
+  updateAdminPermissions,
   deactivateAdmin,
   getRolePermissions,
   getPermissionCategories,
+  getUserDirectPermissions,
   type AdminUser,
   type AdminRole,
   type AdminPermission
@@ -53,6 +55,10 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
     isOpen: false,
     admin: null
   });
+  const [editPermissionsModal, setEditPermissionsModal] = useState<{ isOpen: boolean; admin: AdminUser | null }>({
+    isOpen: false,
+    admin: null
+  });
 
   // Form states
   const [adminForm, setAdminForm] = useState({
@@ -65,6 +71,7 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
 
   const [editRolesForm, setEditRolesForm] = useState<string[]>([]);
   const [editPermissionsForm, setEditPermissionsForm] = useState<string[]>([]);
+  const [directPermissions, setDirectPermissions] = useState<AdminPermission[]>([]);
 
   const permissionCategories = getPermissionCategories();
 
@@ -167,6 +174,39 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
 
   const openViewPermissions = (admin: AdminUser) => {
     setViewPermissionsModal({ isOpen: true, admin });
+  };
+
+  const openEditPermissions = async (admin: AdminUser) => {
+    try {
+      // Получаем прямые разрешения пользователя (не через роли)
+      const userDirectPermissions = await getUserDirectPermissions(admin.id);
+      setDirectPermissions(userDirectPermissions);
+      setEditPermissionsForm(userDirectPermissions.map(p => p.id));
+      setEditPermissionsModal({ isOpen: true, admin });
+    } catch (error) {
+      console.error('Error fetching direct permissions:', error);
+      showError('Ошибка загрузки разрешений');
+    }
+  };
+
+  const handleUpdatePermissions = async () => {
+    if (!editPermissionsModal.admin) return;
+
+    try {
+      await updateAdminPermissions(editPermissionsModal.admin.id, editPermissionsForm);
+      
+      // Обновляем локальные данные
+      const updatedAdmins = await getAdminUsers();
+      setAdmins(updatedAdmins);
+      
+      setEditPermissionsModal({ isOpen: false, admin: null });
+      setEditPermissionsForm([]);
+      setDirectPermissions([]);
+      success('Разрешения администратора обновлены');
+    } catch (error) {
+      console.error('Error updating admin permissions:', error);
+      showError('Ошибка обновления разрешений');
+    }
   };
 
   const getRoleColor = (roleName: string) => {
@@ -307,6 +347,13 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
                     >
                       <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => openEditPermissions(admin)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+                      title="Редактировать разрешения"
+                    >
+                      <Key className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDeactivateAdmin(admin.id)}
@@ -647,6 +694,108 @@ const AdminManagement: React.FC<AdminManagementProps> = ({ currentUserId, isSupe
                 className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition-colors"
               >
                 Закрыть
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Edit Permissions Modal */}
+      {editPermissionsModal.isOpen && editPermissionsModal.admin && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setEditPermissionsModal({ isOpen: false, admin: null })}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="glass-effect rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-3xl font-bold text-white mb-6">
+              Редактировать разрешения: {editPermissionsModal.admin.name}
+            </h2>
+            
+            <div className="mb-6 p-4 bg-blue-500/20 border border-blue-400/30 rounded-xl">
+              <p className="text-blue-200 text-sm">
+                <strong>Примечание:</strong> Здесь редактируются только индивидуальные разрешения пользователя. 
+                Разрешения, полученные через роли, редактируются отдельно в настройках ролей.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {Object.entries(permissionCategories).map(([category, categoryName]) => {
+                const categoryPermissions = permissions.filter(p => p.category === category);
+                
+                if (categoryPermissions.length === 0) return null;
+                
+                return (
+                  <div key={category}>
+                    <h4 className="text-xl font-bold text-white mb-4">{categoryName}:</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {categoryPermissions.map((permission) => {
+                        const isSelected = editPermissionsForm.includes(permission.id);
+                        const isFromRole = editPermissionsModal.admin!.permissions.some(p => 
+                          p.id === permission.id && !directPermissions.some(dp => dp.id === permission.id)
+                        );
+                        
+                        return (
+                          <label
+                            key={permission.id}
+                            className={`flex items-start space-x-3 p-4 rounded-xl cursor-pointer transition-all duration-300 border-2 ${
+                              isSelected
+                                ? 'bg-blue-600/30 border-blue-400/50 text-white'
+                                : 'bg-white/5 hover:bg-white/10 text-white border-white/10 hover:border-white/30'
+                            } ${isFromRole ? 'opacity-60' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              disabled={isFromRole}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setEditPermissionsForm([...editPermissionsForm, permission.id]);
+                                } else {
+                                  setEditPermissionsForm(editPermissionsForm.filter(id => id !== permission.id));
+                                }
+                              }}
+                              className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                            />
+                            <div className="flex-1">
+                              <div className="font-semibold flex items-center space-x-2">
+                                <span>{permission.display_name}</span>
+                                {isFromRole && (
+                                  <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">
+                                    Через роль
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm opacity-80">{permission.description}</div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="flex space-x-4 mt-8">
+              <button
+                onClick={handleUpdatePermissions}
+                className="flex-1 btn-primary flex items-center justify-center space-x-2"
+              >
+                <Key className="h-5 w-5" />
+                <span>Обновить разрешения</span>
+              </button>
+              <button
+                onClick={() => setEditPermissionsModal({ isOpen: false, admin: null })}
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition-colors"
+              >
+                Отмена
               </button>
             </div>
           </motion.div>

@@ -57,7 +57,7 @@ const AdminQuickActions: React.FC<AdminQuickActionsProps> = ({
           </button>
         )}
         
-        {(hasPermission('manage_scores_study') || hasPermission('manage_scores_discipline') || hasPermission('manage_scores_events')) && (
+        {(hasPermission('manage_scores_study') || hasPermission('manage_scores_discipline') || hasPermission('manage_scores_events') || hasPermission('manage_scores')) && (
           <button
             onClick={onAddScore}
             className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center space-x-2"

@@ -72,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               ]);
               userObj.adminRoles = adminRoles;
               userObj.permissions = permissions;
+              console.log('Admin permissions loaded:', permissions.map(p => p.name));
             } catch (roleError) {
               console.error('Error fetching admin roles/permissions:', roleError);
             }
@@ -174,7 +175,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (permissionName: string): boolean => {
     if (isSuperAdmin) return true; // Главный админ имеет все права
-    return user?.permissions?.some(permission => permission.name === permissionName) || false;
+    const hasDirectPermission = user?.permissions?.some(permission => permission.name === permissionName) || false;
+    console.log(`Checking permission "${permissionName}":`, hasDirectPermission, user?.permissions?.map(p => p.name));
+    return hasDirectPermission;
   };
 
   return (

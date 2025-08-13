@@ -30,7 +30,7 @@ async function checkAdminRole(authHeader: string | null, supabaseAdmin: any) {
     throw new Error('Пользователь не найден')
   }
 
-  if (userData.role !== 'admin') {
+  if (userData.role !== 'admin' && userData.role !== 'super_admin') {
     throw new Error('Недостаточно прав доступа')
   }
 
@@ -76,6 +76,66 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Неверная категория баллов' }),
         { 
           status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Проверяем разрешения для конкретной категории баллов
+    const requiredPermissions = {
+      study: ['manage_scores_study', 'manage_scores'],
+      discipline: ['manage_scores_discipline', 'manage_scores'],
+      events: ['manage_scores_events', 'manage_scores']
+    }
+
+    const categoryPermissions = requiredPermissions[category as keyof typeof requiredPermissions]
+    
+    // Проверяем, есть ли у пользователя нужные разрешения
+    let hasPermission = false
+    
+    for (const permission of categoryPermissions) {
+      // Проверяем прямые разрешения
+      const { data: directPerm, error: directError } = await supabaseAdmin
+        .from('user_permissions')
+        .select(`
+          permission:admin_permissions!inner(name)
+        `)
+        .eq('user_id', adminUser.id)
+        .eq('is_active', true)
+        .eq('permission.name', permission)
+        .limit(1)
+
+      if (!directError && directPerm && directPerm.length > 0) {
+        hasPermission = true
+        break
+      }
+
+      // Проверяем разрешения через роли
+      const { data: rolePerm, error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .select(`
+          role:admin_roles!inner(
+            role_permissions!inner(
+              permission:admin_permissions!inner(name)
+            )
+          )
+        `)
+        .eq('user_id', adminUser.id)
+        .eq('is_active', true)
+        .eq('role.role_permissions.permission.name', permission)
+        .limit(1)
+
+      if (!roleError && rolePerm && rolePerm.length > 0) {
+        hasPermission = true
+        break
+      }
+    }
+
+    if (!hasPermission) {
+      return new Response(
+        JSON.stringify({ error: `Недостаточно прав для управления баллами категории "${category}"` }),
+        { 
+          status: 403, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )

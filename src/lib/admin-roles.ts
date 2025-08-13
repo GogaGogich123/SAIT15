@@ -132,10 +132,96 @@ export const getUserRoles = async (userId: string): Promise<AdminRole[]> => {
 
 // Получение разрешений пользователя
 export const getUserPermissions = async (userId: string): Promise<AdminPermission[]> => {
-  const { data, error } = await supabase.rpc('get_user_permissions', { user_id: userId });
+  try {
+    // Получаем прямые разрешения пользователя
+    const { data: directPermissions, error: directError } = await supabase
+      .from('user_permissions')
+      .select(`
+        permission:admin_permissions(*)
+      `)
+      .eq('user_id', userId)
+      .eq('is_active', true);
+
+    if (directError) {
+      console.error('Error fetching direct permissions:', directError);
+    }
+
+    // Получаем разрешения через роли
+    const { data: rolePermissions, error: roleError } = await supabase
+      .from('user_roles')
+      .select(`
+        role:admin_roles!inner(
+          role_permissions(
+            permission:admin_permissions(*)
+          )
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('is_active', true);
+
+    if (roleError) {
+      console.error('Error fetching role permissions:', roleError);
+    }
+
+    // Объединяем все разрешения
+    const allPermissions: AdminPermission[] = [];
+    
+    // Добавляем прямые разрешения
+    if (directPermissions) {
+      directPermissions.forEach(item => {
+        if (item.permission) {
+          allPermissions.push(item.permission);
+        }
+      });
+    }
+
+    // Добавляем разрешения от ролей
+    if (rolePermissions) {
+      rolePermissions.forEach(userRole => {
+        if (userRole.role?.role_permissions) {
+          userRole.role.role_permissions.forEach((rp: any) => {
+            if (rp.permission) {
+              allPermissions.push(rp.permission);
+            }
+          });
+        }
+      });
+    }
+
+    // Удаляем дубликаты по ID
+    const uniquePermissions = allPermissions.filter((permission, index, self) =>
+      index === self.findIndex(p => p.id === permission.id)
+    );
+
+    return uniquePermissions;
+  } catch (error) {
+    console.error('Error in getUserPermissions:', error);
+    return [];
+  }
+};
+
+// Обновление разрешений администратора
+export const updateAdminPermissions = async (userId: string, permissionIds: string[]): Promise<void> => {
+  try {
+    await callEdgeFunction('update-admin-permissions', { userId, permissionIds }, 'PUT');
+  } catch (error) {
+    console.error('Update admin permissions failed', error);
+    throw error;
+  }
+};
+
+// Получение прямых разрешений пользователя (не через роли)
+export const getUserDirectPermissions = async (userId: string): Promise<AdminPermission[]> => {
+  const { data, error } = await supabase
+    .from('user_permissions')
+    .select(`
+      permission:admin_permissions(*)
+    `)
+    .eq('user_id', userId)
+    .eq('is_active', true);
   
   if (error) throw error;
-  return data || [];
+  return data?.map(item => item.permission).filter(Boolean) || [];
 };
 
 // Проверка разрешения пользователя
