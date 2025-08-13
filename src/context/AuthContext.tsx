@@ -78,6 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
 
+          console.log('AuthContext: User data from users table:', userData);
           setUser(userObj);
           return true;
         }
@@ -89,7 +90,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq('auth_user_id', authData.user.id)
           .maybeSingle();
 
+        console.log('AuthContext: Cadet query result:', { cadetData, cadetError, authUserId: authData.user.id });
         if (!cadetError && cadetData) {
+          const userObj = {
+            id: authData.user.id,
+            name: cadetData.name,
+            role: 'cadet' as const,
+            platoon: cadetData.platoon,
+            squad: cadetData.squad,
+            cadetId: cadetData.id
+          };
+          console.log('AuthContext: Setting cadet user object:', userObj);
           setUser({
             id: authData.user.id,
             name: cadetData.name,
@@ -148,6 +159,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Admin user logged in successfully');
       return true;
     } else if (email === 'cadet@nkkk.ru' && password === 'cadet123') {
+      const mockCadetUser = {
+        id: '00000000-0000-0000-0000-000000000003',
+        name: 'Петров Алексей Владимирович',
+        role: 'cadet' as const,
+        platoon: '10-1',
+        squad: 2,
+        cadetId: '00000000-0000-0000-0000-000000000003'
+      };
+      console.log('AuthContext: Mock cadet login, setting user:', mockCadetUser);
       setUser({
         id: '00000000-0000-0000-0000-000000000003',
         name: 'Петров Алексей Владимирович',

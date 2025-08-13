@@ -42,6 +42,9 @@ import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
 const CadetProfile: React.FC = () => {
   const { id } = useParams();
+  console.log('CadetProfile: Received ID from URL params:', id);
+  console.log('CadetProfile: ID type:', typeof id);
+  console.log('CadetProfile: ID length:', id?.length);
   const [cadet, setCadet] = useState<Cadet | null>(null);
   const [scores, setScores] = useState<Score | null>(null);
   const [achievements, setAchievements] = useState<CadetAchievement[]>([]);
@@ -53,6 +56,7 @@ const CadetProfile: React.FC = () => {
   useEffect(() => {
     const fetchCadetData = async () => {
       if (!id || id === 'undefined' || id.trim() === '' || id === 'null') {
+        console.log('CadetProfile: Invalid ID detected:', { id, type: typeof id });
         setError('Неверный ID кадета');
         setLoading(false);
         return;
@@ -61,6 +65,7 @@ const CadetProfile: React.FC = () => {
       // Проверяем, является ли ID валидным UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(id)) {
+        console.log('CadetProfile: ID failed UUID validation:', id);
         setError('Неверный формат ID кадета');
         setLoading(false);
         return;
@@ -68,11 +73,14 @@ const CadetProfile: React.FC = () => {
       
       try {
         setLoading(true);
+        console.log('CadetProfile: Attempting to fetch cadet with ID:', id);
         
         // Получаем данные кадета
         const cadetData = await getCadetById(id);
+        console.log('CadetProfile: getCadetById result:', cadetData);
         
         if (!cadetData) {
+          console.log('CadetProfile: No cadet data returned for ID:', id);
           setError('Кадет не найден');
           setLoading(false);
           return;

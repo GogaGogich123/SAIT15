@@ -102,6 +102,8 @@ const Header: React.FC = () => {
                 </motion.button>
                 
                 {user.role === 'cadet' && (
+                  <>
+                    {console.log('Header: user.cadetId for profile link:', user.cadetId)}
                   <Link
                     to={`/cadet/${user.cadetId}`}
                     className="nav-link-inactive"
@@ -109,6 +111,7 @@ const Header: React.FC = () => {
                     <User className="h-4 w-4" />
                     <span className="hidden sm:inline">{user.name.split(' ')[0]}</span>
                   </Link>
+                  </>
                 )}
                 {user.role === 'admin' && (
                   <Link
