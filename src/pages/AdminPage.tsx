@@ -366,7 +366,9 @@ const AdminPage: React.FC = () => {
       // Convert empty time string to null for database compatibility
       const eventData = {
         ...eventForm,
-        event_time: eventForm.event_time === '' ? null : eventForm.event_time
+        event_time: eventForm.event_time === '' ? null : eventForm.event_time,
+        event_date: eventForm.event_date === '' ? null : eventForm.event_date,
+        registration_deadline: eventForm.registration_deadline === '' ? null : eventForm.registration_deadline
       };
       
       if (eventModal.isEditing && eventModal.event) {
