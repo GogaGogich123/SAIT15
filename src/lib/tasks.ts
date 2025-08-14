@@ -113,6 +113,26 @@ export const getTaskSubmissions = async (cadetId: string): Promise<TaskSubmissio
   return data || [];
 };
 
+export const getTasksWithParticipantCounts = async (): Promise<Task[]> => {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select(`
+      *,
+      current_participants:task_submissions(count)
+    `)
+    .eq('status', 'active')
+    .eq('is_active', true)
+    .order('deadline', { ascending: true });
+  
+  if (error) throw error;
+  
+  // Обрабатываем данные для получения правильного счетчика участников
+  return (data || []).map(task => ({
+    ...task,
+    current_participants: task.current_participants?.[0]?.count || 0
+  }));
+};
+
 export const getTaskSubmissionsByTask = async (taskId: string): Promise<TaskSubmission[]> => {
   const { data, error } = await supabase
     .from('task_submissions')
@@ -142,24 +162,14 @@ export const getAllTaskSubmissions = async (): Promise<TaskSubmission[]> => {
 };
 
 export const takeTask = async (taskId: string, cadetId: string): Promise<void> => {
-  // Проверяем, не превышен ли лимит участников
-  const task = await getTaskById(taskId);
-  if (!task) throw new Error('Задание не найдено');
-  
-  if (task.max_participants > 0 && task.current_participants >= task.max_participants) {
-    throw new Error('Достигнуто максимальное количество участников');
+  try {
+    const result = await callEdgeFunction('take-task-action', { taskId, cadetId });
+    console.log('Task taken successfully via Edge Function');
+    return result;
+  } catch (error) {
+    console.error('Take task via Edge Function failed', error);
+    throw error;
   }
-
-  const { error } = await supabase
-    .from('task_submissions')
-    .insert({
-      task_id: taskId,
-      cadet_id: cadetId,
-      status: 'taken',
-      submission_text: ''
-    });
-  
-  if (error) throw error;
 };
 
 export const submitTask = async (taskId: string, cadetId: string, submissionText: string): Promise<void> => {
@@ -178,16 +188,14 @@ export const submitTask = async (taskId: string, cadetId: string, submissionText
 };
 
 export const abandonTask = async (taskId: string, cadetId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('task_submissions')
-    .update({
-      status: 'abandoned',
-      updated_at: new Date().toISOString()
-    })
-    .eq('task_id', taskId)
-    .eq('cadet_id', cadetId);
-  
-  if (error) throw error;
+  try {
+    const result = await callEdgeFunction('abandon-task-action', { taskId, cadetId });
+    console.log('Task abandoned successfully via Edge Function');
+    return result;
+  } catch (error) {
+    console.error('Abandon task via Edge Function failed', error);
+    throw error;
+  }
 };
 
 export const isTaskTaken = async (taskId: string, cadetId: string): Promise<boolean> => {

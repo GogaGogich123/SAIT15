@@ -26,7 +26,7 @@ import {
   abandonTask,
   type Task,
   type TaskSubmission
-} from '../lib/supabase';
+} from '../lib/tasks';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
 interface TaskWithSubmission extends Task {
@@ -140,15 +140,28 @@ const TasksPage: React.FC = () => {
     
     try {
       await takeTask(taskId, user.cadetId);
-      // Обновляем список заданий
-      setTasks(tasks.map(task => 
-        task.id === taskId 
-          ? { ...task, userStatus: 'taken' }
-          : task
-      ));
+      
+      // Перезагружаем данные для синхронизации с базой данных
+      const [tasksData, submissionsData] = await Promise.all([
+        getTasks(),
+        getTaskSubmissions(user.cadetId)
+      ]);
+      
+      const tasksWithSubmissions: TaskWithSubmission[] = tasksData.map(task => {
+        const submission = submissionsData.find(s => s.task_id === task.id);
+        return {
+          ...task,
+          submission,
+          userStatus: submission ? submission.status : 'available'
+        };
+      });
+      
+      setTasks(tasksWithSubmissions);
+      alert('Задание успешно взято');
     } catch (error) {
       console.error('Error taking task:', error);
-      alert('Ошибка при взятии задания');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при взятии задания';
+      alert(errorMessage);
     }
   };
 
@@ -174,17 +187,34 @@ const TasksPage: React.FC = () => {
   const handleAbandonTask = async (taskId: string) => {
     if (!user?.cadetId) return;
     
+    if (!confirm('Вы уверены, что хотите отказаться от задания? Может быть применен штраф.')) {
+      return;
+    }
+    
     try {
       await abandonTask(taskId, user.cadetId);
-      // Обновляем список заданий
-      setTasks(tasks.map(task => 
-        task.id === taskId 
-          ? { ...task, userStatus: 'available' }
-          : task
-      ));
+      
+      // Перезагружаем данные для синхронизации с базой данных
+      const [tasksData, submissionsData] = await Promise.all([
+        getTasks(),
+        getTaskSubmissions(user.cadetId)
+      ]);
+      
+      const tasksWithSubmissions: TaskWithSubmission[] = tasksData.map(task => {
+        const submission = submissionsData.find(s => s.task_id === task.id);
+        return {
+          ...task,
+          submission,
+          userStatus: submission ? submission.status : 'available'
+        };
+      });
+      
+      setTasks(tasksWithSubmissions);
+      alert('Отказ от задания зафиксирован');
     } catch (error) {
       console.error('Error abandoning task:', error);
-      alert('Ошибка при отказе от задания');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при отказе от задания';
+      alert(errorMessage);
     }
   };
 

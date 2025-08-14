@@ -271,44 +271,6 @@ export const getTaskSubmissions = async (cadetId: string): Promise<TaskSubmissio
   return data || [];
 };
 
-export const takeTask = async (taskId: string, cadetId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('task_submissions')
-    .insert({
-      task_id: taskId,
-      cadet_id: cadetId,
-      status: 'taken',
-      submission_text: ''
-    });
-  
-  if (error) throw error;
-};
-
-export const submitTask = async (taskId: string, cadetId: string, submissionText: string): Promise<void> => {
-  const { error } = await supabase
-    .from('task_submissions')
-    .update({
-      submission_text: submissionText,
-      status: 'submitted',
-      submitted_at: new Date().toISOString()
-    })
-    .eq('task_id', taskId)
-    .eq('cadet_id', cadetId);
-  
-  if (error) throw error;
-};
-
-export const abandonTask = async (taskId: string, cadetId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('task_submissions')
-    .delete()
-    .eq('task_id', taskId)
-    .eq('cadet_id', cadetId)
-    .eq('status', 'taken');
-  
-  if (error) throw error;
-};
-
 // Update functions
 export const updateCadet = async (id: string, updates: Partial<Cadet>): Promise<void> => {
   const { error } = await supabase

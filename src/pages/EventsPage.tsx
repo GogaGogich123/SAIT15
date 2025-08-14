@@ -87,12 +87,14 @@ const EventsPage: React.FC = () => {
 
     try {
       await registerForEvent(eventId, user.cadetId);
+      
+      // Перезагружаем данные событий для синхронизации с базой данных
+      const eventsData = await getEvents();
+      setEvents(eventsData);
+      
+      // Обновляем статус регистрации
       setRegistrations({ ...registrations, [eventId]: true });
-      setEvents(events.map(event => 
-        event.id === eventId 
-          ? { ...event, participants_count: event.participants_count + 1 }
-          : event
-      ));
+      
       alert('Вы успешно зарегистрированы на событие!');
     } catch (err) {
       console.error('Error registering for event:', err);
@@ -105,12 +107,14 @@ const EventsPage: React.FC = () => {
 
     try {
       await cancelEventRegistration(eventId, user.cadetId);
+      
+      // Перезагружаем данные событий для синхронизации с базой данных
+      const eventsData = await getEvents();
+      setEvents(eventsData);
+      
+      // Обновляем статус регистрации
       setRegistrations({ ...registrations, [eventId]: false });
-      setEvents(events.map(event => 
-        event.id === eventId 
-          ? { ...event, participants_count: Math.max(0, event.participants_count - 1) }
-          : event
-      ));
+      
       alert('Регистрация отменена');
     } catch (err) {
       console.error('Error canceling registration:', err);
