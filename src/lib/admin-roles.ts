@@ -62,14 +62,20 @@ const callEdgeFunction = async (functionName: string, payload: any = {}, method:
   const token = await getAuthToken();
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   
-  const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+  const requestOptions: RequestInit = {
     method,
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
-  });
+  };
+
+  // Only include body for non-GET/HEAD requests
+  if (method !== 'GET' && method !== 'HEAD') {
+    requestOptions.body = JSON.stringify(payload);
+  }
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, requestOptions);
 
   const data = await response.json();
 
