@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { cache } from './cache';
-import { CACHE_KEYS } from '../utils/constants';
+import { CACHE_KEYS, CACHE_DURATION } from '../utils/constants';
 
 // Types
 export interface Event {
