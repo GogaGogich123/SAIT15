@@ -86,10 +86,17 @@ export interface Task {
   description: string;
   category: 'study' | 'discipline' | 'events';
   difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: 'easy' | 'medium' | 'hard';
   points: number;
   deadline: string;
-  status: string;
+  status: 'active' | 'inactive';
+  max_participants: number;
+  current_participants: number;
+  abandon_penalty: number;
+  created_by?: string;
   created_at: string;
+  updated_at: string;
+  is_active: boolean;
 }
 
 export interface TaskSubmission {
