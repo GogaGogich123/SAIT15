@@ -178,7 +178,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }],
-        permissions: []
+        permissions: [{
+          id: 'award_achievements_perm',
+          name: 'award_achievements',
+          display_name: 'Присуждение достижений',
+          description: 'Право присуждать достижения кадетам',
+          category: 'achievements',
+          created_at: new Date().toISOString()
+        }]
       });
       console.log('Admin user logged in successfully');
       return true;
