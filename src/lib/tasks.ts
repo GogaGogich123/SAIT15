@@ -68,6 +68,8 @@ export interface TaskSubmission {
   task?: Task;
   cadet?: {
     name: string;
+  }
+}
 export const getTaskById = async (taskId: string): Promise<Task | null> => {
   const { data, error } = await supabase
     .from('tasks')
