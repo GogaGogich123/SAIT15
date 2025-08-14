@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import ParticleBackground from '../components/ParticleBackground';
 import ModernBackground from '../components/ModernBackground';
-import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
+import ThemedBackground from '../components/ThemedBackground';
 import StatCard from '../components/StatCard';
 import { fadeInUp, staggerContainer, staggerItem, scaleIn } from '../utils/animations';
 
@@ -115,7 +115,7 @@ const HomePage: React.FC = () => {
       <section ref={heroRef} className="relative overflow-hidden section-padding hero-bg">
         {/* Modern Particle Background */}
         <div className="absolute inset-0">
-          <AnimatedSVGBackground />
+          <ThemedBackground />
         </div>
         
         {/* Overlay for better text readability */}

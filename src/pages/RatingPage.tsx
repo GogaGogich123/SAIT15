@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Search, Filter, Trophy, Medal, Target, Users, TrendingUp, TrendingDown } from 'lucide-react';
 import ParticleBackground from '../components/ParticleBackground';
 import ModernBackground from '../components/ModernBackground';
-import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
+import ThemedBackground from '../components/ThemedBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getCadets, getCadetScores, type Cadet, type Score } from '../lib/supabase';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
@@ -119,7 +119,7 @@ const RatingPage: React.FC = () => {
       className="min-h-screen relative overflow-hidden"
     >
       <div className="absolute inset-0">
-        <AnimatedSVGBackground />
+        <ThemedBackground />
       </div>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-slate-800/95 z-10"></div>
       

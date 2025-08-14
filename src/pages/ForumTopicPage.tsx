@@ -14,7 +14,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
+import ThemedBackground from '../components/ThemedBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   getTopicById, 
@@ -166,7 +166,7 @@ const ForumTopicPage: React.FC = () => {
       className="min-h-screen relative overflow-hidden"
     >
       <div className="absolute inset-0">
-        <AnimatedSVGBackground />
+        <ThemedBackground />
       </div>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-slate-800/95 z-10"></div>
       

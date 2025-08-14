@@ -16,7 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import ParticleBackground from '../components/ParticleBackground';
 import ModernBackground from '../components/ModernBackground';
-import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
+import ThemedBackground from '../components/ThemedBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   getTaskSubmissions, 
@@ -210,7 +210,7 @@ const TasksPage: React.FC = () => {
       className="min-h-screen relative overflow-hidden"
     >
       <div className="absolute inset-0">
-        <AnimatedSVGBackground />
+        <ThemedBackground />
       </div>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-slate-800/95 z-10"></div>
       

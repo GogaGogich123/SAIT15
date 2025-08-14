@@ -7,6 +7,19 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* CSS переменные для тем */
+    --theme-primary: rgb(59, 130, 246);
+    --theme-secondary: rgb(251, 191, 36);
+    --theme-accent: rgb(139, 92, 246);
+    --theme-background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%);
+    --theme-surface: rgba(255, 255, 255, 0.05);
+    --theme-text: rgb(255, 255, 255);
+    --theme-text-secondary: rgb(203, 213, 225);
+    --theme-border: rgba(255, 255, 255, 0.1);
+    --theme-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #3b82f6 100%);
+    --theme-card-gradient: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    --theme-button-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #3b82f6 100%);
+    --theme-glow-color: rgba(59, 130, 246, 0.5);
   }
   
   body {
@@ -61,13 +74,27 @@
   }
   
   .btn-primary {
-    @apply btn bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 hover:from-blue-700 hover:via-purple-700 hover:to-blue-900 text-white px-8 py-4 rounded-full shadow-2xl hover:shadow-blue-500/25 hover:scale-105 focus:ring-blue-400 transform-gpu;
+    @apply btn text-white px-8 py-4 rounded-full shadow-2xl hover:scale-105 transform-gpu;
+    background: var(--theme-button-gradient);
+    box-shadow: 0 25px 50px -12px var(--theme-glow-color);
     background-size: 200% 200%;
     animation: gradientShift 3s ease infinite;
   }
   
+  .btn-primary:hover {
+    box-shadow: 0 25px 50px -12px var(--theme-glow-color), 0 0 30px var(--theme-glow-color);
+  }
+  
   .btn-secondary {
-    @apply btn bg-transparent border-2 border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-white px-8 py-4 rounded-full shadow-lg hover:shadow-blue-400/25 hover:scale-105 focus:ring-blue-400 backdrop-blur-sm;
+    @apply btn bg-transparent border-2 px-8 py-4 rounded-full shadow-lg hover:scale-105 backdrop-blur-sm;
+    border-color: var(--theme-primary);
+    color: var(--theme-primary);
+  }
+  
+  .btn-secondary:hover {
+    background: var(--theme-primary);
+    color: white;
+    box-shadow: 0 25px 50px -12px var(--theme-glow-color);
   }
   
   .btn-ghost {
@@ -144,16 +171,19 @@
   
   /* Enhanced Text Components */
   .text-gradient {
-    @apply bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent;
+    background: var(--theme-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
     background-size: 200% 200%;
     animation: gradientShift 4s ease infinite;
   }
   
   .text-glow {
     text-shadow: 
-      0 0 10px rgba(59, 130, 246, 0.5),
-      0 0 20px rgba(59, 130, 246, 0.3),
-      0 0 40px rgba(59, 130, 246, 0.2);
+      0 0 10px var(--theme-glow-color),
+      0 0 20px var(--theme-glow-color),
+      0 0 40px var(--theme-glow-color);
     animation: textGlow 2s ease-in-out infinite alternate;
   }
   
@@ -177,11 +207,14 @@
   }
   
   .glass-effect {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 relative;
+    background: var(--theme-surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--theme-border);
+    position: relative;
     box-shadow: 
       0 8px 32px rgba(31, 38, 135, 0.37),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 0 1px rgba(255, 255, 255, 0.05);
+      inset 0 1px 0 var(--theme-border),
+      0 0 0 1px var(--theme-border);
   }
   
   .glass-effect::before {
@@ -196,14 +229,14 @@
   }
   
   .gradient-bg {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%);
+    background: var(--theme-background);
     background-size: 400% 400%;
     animation: gradientMove 15s ease infinite;
   }
   
   .hero-bg {
-    background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%),
-                linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%);
+    background: radial-gradient(ellipse at center, var(--theme-glow-color) 0%, transparent 70%),
+                var(--theme-background);
     background-size: 100% 100%, 400% 400%;
     animation: gradientMove 20s ease infinite;
   }
@@ -374,6 +407,25 @@
   .clip-path-polygon {
     clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
   }
+}
+
+/* Темы */
+.theme-default {
+  --theme-primary: rgb(59, 130, 246);
+  --theme-secondary: rgb(251, 191, 36);
+  --theme-accent: rgb(139, 92, 246);
+}
+
+.theme-black-gold {
+  --theme-primary: rgb(251, 191, 36);
+  --theme-secondary: rgb(245, 158, 11);
+  --theme-accent: rgb(217, 119, 6);
+}
+
+.theme-emerald-elegance {
+  --theme-primary: rgb(16, 185, 129);
+  --theme-secondary: rgb(52, 211, 153);
+  --theme-accent: rgb(6, 182, 212);
 }
 
 /* Advanced Keyframe Animations */
