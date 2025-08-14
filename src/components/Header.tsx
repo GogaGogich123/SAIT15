@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from './SearchBar';
-import ThemeSelector from './ThemeSelector';
 import Button from './ui/Button';
 
 const Header: React.FC = () => {
@@ -83,9 +82,6 @@ const Header: React.FC = () => {
 
           {/* Desktop Actions */}
           <div className="flex items-center space-x-4">
-            {/* Theme Selector */}
-            <ThemeSelector />
-            
             {user ? (
               <>
                 {/* Search Bar */}

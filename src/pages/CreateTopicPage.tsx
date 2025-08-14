@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, Send, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import ThemedBackground from '../components/ThemedBackground';
+import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   getForumCategories, 
@@ -111,7 +111,7 @@ const CreateTopicPage: React.FC = () => {
       className="min-h-screen relative overflow-hidden"
     >
       <div className="absolute inset-0">
-        <ThemedBackground />
+        <AnimatedSVGBackground />
       </div>
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-slate-800/95 z-10"></div>
       
