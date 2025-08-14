@@ -3,6 +3,7 @@ export const CACHE_KEYS = {
   CADETS: 'cadets',
   NEWS: 'news',
   TASKS: 'tasks',
+  EVENTS: 'events',
   ACHIEVEMENTS: 'achievements',
   AUTO_ACHIEVEMENTS: 'auto_achievements',
   SCORES: 'scores',

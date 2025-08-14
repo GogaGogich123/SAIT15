@@ -1,5 +1,7 @@
 import { supabase } from './supabase';
 import { updateCadetScoresAdmin } from './admin';
+import { cache } from './cache';
+import { CACHE_KEYS } from '../utils/constants';
 
 // Функция для получения токена авторизации
 const getAuthToken = async () => {
@@ -146,6 +148,8 @@ export const getAllTaskSubmissions = async (): Promise<TaskSubmission[]> => {
 export const takeTask = async (taskId: string, cadetId: string): Promise<void> => {
   try {
     const result = await callEdgeFunction('take-task-action', { taskId, cadetId });
+    // Очищаем кэш заданий для получения актуальных данных
+    cache.delete(CACHE_KEYS.TASKS);
     console.log('Task taken successfully via Edge Function');
     return result;
   } catch (error) {
@@ -172,6 +176,8 @@ export const submitTask = async (taskId: string, cadetId: string, submissionText
 export const abandonTask = async (taskId: string, cadetId: string): Promise<void> => {
   try {
     const result = await callEdgeFunction('abandon-task-action', { taskId, cadetId });
+    // Очищаем кэш заданий для получения актуальных данных
+    cache.delete(CACHE_KEYS.TASKS);
     console.log('Task abandoned successfully via Edge Function');
     return result;
   } catch (error) {
@@ -197,6 +203,8 @@ export const isTaskTaken = async (taskId: string, cadetId: string): Promise<bool
 export const createTask = async (taskData: Omit<Task, 'id' | 'current_participants' | 'created_at' | 'updated_at'>): Promise<Task> => {
   try {
     const result = await callEdgeFunction('create-task', taskData);
+    // Очищаем кэш заданий после создания нового задания
+    cache.delete(CACHE_KEYS.TASKS);
     return result.task;
   } catch (error) {
     console.error('Create task failed', error);
@@ -207,6 +215,8 @@ export const createTask = async (taskData: Omit<Task, 'id' | 'current_participan
 export const updateTask = async (taskId: string, updates: Partial<Task>): Promise<void> => {
   try {
     await callEdgeFunction('update-task', { taskId, updates }, 'PUT');
+    // Очищаем кэш заданий после обновления
+    cache.delete(CACHE_KEYS.TASKS);
   } catch (error) {
     console.error('Update task failed', error);
     throw error;
@@ -220,6 +230,9 @@ export const deleteTask = async (taskId: string): Promise<void> => {
     .eq('id', taskId);
   
   if (error) throw error;
+  
+  // Очищаем кэш заданий после удаления
+  cache.delete(CACHE_KEYS.TASKS);
 };
 
 export const reviewTaskSubmission = async (

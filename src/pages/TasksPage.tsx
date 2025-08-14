@@ -141,22 +141,8 @@ const TasksPage: React.FC = () => {
     try {
       await takeTask(taskId, user.cadetId);
       
-      // Перезагружаем данные для синхронизации с базой данных
-      const [tasksData, submissionsData] = await Promise.all([
-        getTasks(),
-        getTaskSubmissions(user.cadetId)
-      ]);
-      
-      const tasksWithSubmissions: TaskWithSubmission[] = tasksData.map(task => {
-        const submission = submissionsData.find(s => s.task_id === task.id);
-        return {
-          ...task,
-          submission,
-          userStatus: submission ? submission.status : 'available'
-        };
-      });
-      
-      setTasks(tasksWithSubmissions);
+      // Перезагружаем все данные заданий
+      window.location.reload();
       alert('Задание успешно взято');
     } catch (error) {
       console.error('Error taking task:', error);
@@ -194,22 +180,8 @@ const TasksPage: React.FC = () => {
     try {
       await abandonTask(taskId, user.cadetId);
       
-      // Перезагружаем данные для синхронизации с базой данных
-      const [tasksData, submissionsData] = await Promise.all([
-        getTasks(),
-        getTaskSubmissions(user.cadetId)
-      ]);
-      
-      const tasksWithSubmissions: TaskWithSubmission[] = tasksData.map(task => {
-        const submission = submissionsData.find(s => s.task_id === task.id);
-        return {
-          ...task,
-          submission,
-          userStatus: submission ? submission.status : 'available'
-        };
-      });
-      
-      setTasks(tasksWithSubmissions);
+      // Перезагружаем все данные заданий
+      window.location.reload();
       alert('Отказ от задания зафиксирован');
     } catch (error) {
       console.error('Error abandoning task:', error);

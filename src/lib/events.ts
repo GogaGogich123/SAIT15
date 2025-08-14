@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { cache } from './cache';
+import { CACHE_KEYS } from '../utils/constants';
 
 // Types
 export interface Event {
@@ -40,6 +42,12 @@ export interface EventParticipant {
 
 // Events functions
 export const getEvents = async (): Promise<Event[]> => {
+  // Проверяем кэш
+  const cached = cache.get<Event[]>(CACHE_KEYS.EVENTS);
+  if (cached) {
+    return cached;
+  }
+  
   const { data, error } = await supabase
     .from('events')
     .select('*')
@@ -47,7 +55,13 @@ export const getEvents = async (): Promise<Event[]> => {
     .order('event_date', { ascending: true });
   
   if (error) throw error;
-  return data || [];
+  
+  const result = data || [];
+  
+  // Кэшируем результат
+  cache.set(CACHE_KEYS.EVENTS, result, CACHE_DURATION.MEDIUM);
+  
+  return result;
 };
 
 export const getEventById = async (eventId: string): Promise<Event | null> => {
@@ -99,6 +113,9 @@ export const registerForEvent = async (eventId: string, cadetId: string, notes?:
     }]);
   
   if (error) throw error;
+  
+  // Очищаем кэш событий для получения актуальных данных
+  cache.delete(CACHE_KEYS.EVENTS);
 };
 
 export const cancelEventRegistration = async (eventId: string, cadetId: string): Promise<void> => {
@@ -109,6 +126,9 @@ export const cancelEventRegistration = async (eventId: string, cadetId: string):
     .eq('cadet_id', cadetId);
   
   if (error) throw error;
+  
+  // Очищаем кэш событий для получения актуальных данных
+  cache.delete(CACHE_KEYS.EVENTS);
 };
 
 export const isRegisteredForEvent = async (eventId: string, cadetId: string): Promise<boolean> => {
@@ -145,6 +165,9 @@ export const createEvent = async (eventData: Omit<Event, 'id' | 'participants_co
     .single();
   
   if (error) throw error;
+  
+  // Очищаем кэш событий после создания
+  cache.delete(CACHE_KEYS.EVENTS);
   return data;
 };
 
@@ -158,6 +181,9 @@ export const updateEvent = async (eventId: string, updates: Partial<Event>): Pro
     .eq('id', eventId);
   
   if (error) throw error;
+  
+  // Очищаем кэш событий после обновления
+  cache.delete(CACHE_KEYS.EVENTS);
 };
 
 export const deleteEvent = async (eventId: string): Promise<void> => {
@@ -167,6 +193,9 @@ export const deleteEvent = async (eventId: string): Promise<void> => {
     .eq('id', eventId);
   
   if (error) throw error;
+  
+  // Очищаем кэш событий после удаления
+  cache.delete(CACHE_KEYS.EVENTS);
 };
 
 export const updateParticipantStatus = async (participantId: string, status: 'registered' | 'confirmed' | 'cancelled'): Promise<void> => {
