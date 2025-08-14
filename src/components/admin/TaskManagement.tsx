@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  getTasksWithParticipantCounts, 
+  getTasks, 
   getAllTaskSubmissions,
   createTask,
   updateTask,
@@ -73,7 +73,7 @@ const TaskManagement: React.FC = () => {
       try {
         setLoading(true);
         const [tasksData, submissionsData] = await Promise.all([
-          getTasksWithParticipantCounts(),
+          getTasks(),
           getAllTaskSubmissions()
         ]);
         
