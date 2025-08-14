@@ -237,32 +237,13 @@ export const checkUserPermission = async (userId: string, permissionName: string
 
 // Получение всех администраторов с их ролями
 export const getAdminUsers = async (): Promise<AdminUser[]> => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, email, name, role, created_at')
-    .in('role', ['admin', 'super_admin'])
-  
-  if (error) throw error;
-  
-  // Преобразуем данные
-  const adminUsers: AdminUser[] = [];
-  
-  for (const user of data || []) {
-    const roles = await getUserRoles(user.id);
-    const permissions = await getUserPermissions(user.id);
-    
-    adminUsers.push({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      roles,
-      permissions,
-      created_at: user.created_at
-    });
+  try {
+    const result = await callEdgeFunction('get-all-admins', {}, 'GET');
+    return result.admins;
+  } catch (error) {
+    console.error('Get admin users failed', error);
+    throw error;
   }
-  
-  return adminUsers;
 };
 
 // Создание нового администратора
