@@ -51,26 +51,29 @@ async function checkAdminPermissions(authHeader: string | null, supabaseAdmin: a
     throw new Error('Недостаточно прав доступа')
   }
 
-  // Проверяем разрешение award_achievements
-  const { data: hasPermission, error: permError } = await supabaseAdmin
-    .rpc('user_has_permission', { 
-      user_id: user.id, 
-      permission_name: 'award_achievements' 
-    })
-
-  if (permError) {
-    console.error('Error checking award_achievements permission:', permError)
-    // For mock users or admin/super_admin roles, allow the action
-    const userRole = userData?.role || user.role
-    if (userRole === 'admin' || userRole === 'super_admin' || user.id.startsWith('00000000-0000-0000-0000')) {
-      return user
-    }
-    throw new Error('Ошибка проверки прав доступа')
+  const userRole = userData.role
+  
+  // Super admins and mock users always have permission
+  if (userRole === 'super_admin' || user.id.startsWith('00000000-0000-0000-0000')) {
+    return user
   }
+  
+  // For regular admins, check specific permission
+  if (userRole === 'admin') {
+    const { data: hasPermission, error: permError } = await supabaseAdmin
+      .rpc('user_has_permission', { 
+        user_id: user.id, 
+        permission_name: 'award_achievements' 
+      })
 
-  const userRole = userData?.role || user.role
-  if (!hasPermission && userRole !== 'super_admin' && !user.id.startsWith('00000000-0000-0000-0000')) {
-    throw new Error('Недостаточно прав для присуждения достижений')
+    if (permError) {
+      console.error('Error checking award_achievements permission:', permError)
+      throw new Error('Ошибка проверки прав доступа')
+    }
+
+    if (!hasPermission) {
+      throw new Error('Недостаточно прав для присуждения достижений')
+    }
   }
 
   return user
