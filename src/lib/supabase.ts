@@ -229,11 +229,37 @@ export const getScoreHistory = async (cadetId: string): Promise<ScoreHistory[]> 
 };
 
 export const getNews = async (): Promise<News[]> => {
-  const cached = cache.get<News[]>(CACHE_KEYS.NEWS);
-  if (cached) {
-    return cached;
+  // Check if Supabase is properly configured
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'undefined' || supabaseAnonKey === 'undefined') {
+    throw new Error('Supabase configuration missing');
   }
   
+  try {
+    const cached = cache.get<News[]>(CACHE_KEYS.NEWS);
+    if (cached) {
+      return cached;
+    }
+    
+    // Test connection with a simple query
+    const { data, error } = await supabase
+      .from('news')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Supabase query error:', error);
+      throw new Error(`Database error: ${error.message}`);
+    }
+    
+    const result = data || [];
+    cache.set(CACHE_KEYS.NEWS, result, CACHE_DURATION.SHORT);
+    
+    return result;
+  } catch (networkError) {
+    console.error('Network error connecting to Supabase:', networkError);
+    throw new Error('Failed to connect to database');
+  }
+};
   const { data, error } = await supabase
     .from('news')
     .select('*')

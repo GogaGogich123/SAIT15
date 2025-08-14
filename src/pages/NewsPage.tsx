@@ -19,11 +19,26 @@ const NewsPage: React.FC = () => {
     const fetchNews = async () => {
       try {
         setLoading(true);
-        const newsData = await getNews();
-        setNews(newsData);
+        setError(null);
+        
+        // Check if Supabase is configured
+        if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+          console.warn('Supabase not configured, using fallback data');
+          setNews(getFallbackNews());
+          return;
+        }
+        
+        try {
+          const newsData = await getNews();
+          setNews(newsData);
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed, using fallback data:', supabaseError);
+          setNews(getFallbackNews());
+        }
       } catch (err) {
         console.error('Error fetching news:', err);
-        setError('Ошибка загрузки новостей');
+        setError('Ошибка загрузки новостей. Показаны демонстрационные данные.');
+        setNews(getFallbackNews());
       } finally {
         setLoading(false);
       }
@@ -31,6 +46,49 @@ const NewsPage: React.FC = () => {
 
     fetchNews();
   }, []);
+
+  const getFallbackNews = (): News[] => [
+    {
+      id: '1',
+      title: 'Торжественное построение кадетского корпуса',
+      content: 'Сегодня состоялось торжественное построение всех кадетов корпуса. Были отмечены лучшие достижения за прошедший месяц и вручены награды отличившимся кадетам. Особые поздравления получили кадеты, показавшие выдающиеся результаты в учебе и дисциплине.',
+      author: 'Полковник Иванов А.С.',
+      created_at: new Date().toISOString(),
+      is_main: true,
+      background_image_url: 'https://images.pexels.com/photos/8828786/pexels-photo-8828786.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      images: [
+        'https://images.pexels.com/photos/8828786/pexels-photo-8828786.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+        'https://images.pexels.com/photos/7713188/pexels-photo-7713188.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+      ]
+    },
+    {
+      id: '2',
+      title: 'Спортивные соревнования между взводами',
+      content: 'Прошли ежемесячные спортивные соревнования между взводами. Первое место занял 2-й взвод, показав отличные результаты в беге, подтягивании и командных играх.',
+      author: 'Майор Петров В.И.',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      is_main: false,
+      images: ['https://images.pexels.com/photos/2834914/pexels-photo-2834914.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1']
+    },
+    {
+      id: '3',
+      title: 'Научная конференция кадетов',
+      content: 'Состоялась ежегодная научная конференция, где кадеты представили свои исследовательские проекты. Лучшие работы будут направлены на региональный конкурс.',
+      author: 'Капитан Сидорова М.А.',
+      created_at: new Date(Date.now() - 172800000).toISOString(),
+      is_main: false,
+      images: ['https://images.pexels.com/photos/8199562/pexels-photo-8199562.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1']
+    },
+    {
+      id: '4',
+      title: 'Экскурсия в военный музей',
+      content: 'Кадеты посетили военно-исторический музей, где познакомились с историей российской армии и флота. Экскурсия произвела большое впечатление на всех участников.',
+      author: 'Лейтенант Козлов Д.П.',
+      created_at: new Date(Date.now() - 259200000).toISOString(),
+      is_main: false,
+      images: ['https://images.pexels.com/photos/8828793/pexels-photo-8828793.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1']
+    }
+  ];
 
   const mainNews = news.find(item => item.is_main);
   const regularNews = news.filter(item => !item.is_main);
