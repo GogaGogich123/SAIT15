@@ -60,18 +60,56 @@ async function checkAdminPermissions(authHeader: string | null, supabaseAdmin: a
   
   // For regular admins, check specific permission
   if (userRole === 'admin') {
-    const { data: hasPermission, error: permError } = await supabaseAdmin
-      .rpc('user_has_permission', { 
-        user_id: user.id, 
-        permission_name: 'award_achievements' 
-      })
+    // Check if user has manage_achievements permission
+    const { data: permissions, error: permError } = await supabaseAdmin
+      .from('admin_permissions')
+      .select('id')
+      .eq('name', 'manage_achievements')
+      .single()
 
-    if (permError) {
-      console.error('Error checking award_achievements permission:', permError)
+    if (permError || !permissions) {
+      console.error('Error finding manage_achievements permission:', permError)
       throw new Error('Ошибка проверки прав доступа')
     }
 
-    if (!hasPermission) {
+    // Check if user has this permission through roles or direct assignment
+    const { data: userPermissions, error: userPermError } = await supabaseAdmin
+      .from('user_permissions')
+      .select('permission_id')
+      .eq('user_id', user.id)
+      .eq('permission_id', permissions.id)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (userPermError) {
+      console.error('Error checking user permissions:', userPermError)
+      throw new Error('Ошибка проверки прав доступа')
+    }
+
+    // Also check permissions through roles
+    const { data: rolePermissions, error: rolePermError } = await supabaseAdmin
+      .from('user_roles')
+      .select(`
+        role_id,
+        admin_roles!inner(
+          role_permissions!inner(
+            permission_id
+          )
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .eq('admin_roles.role_permissions.permission_id', permissions.id)
+
+    if (rolePermError) {
+      console.error('Error checking role permissions:', rolePermError)
+      throw new Error('Ошибка проверки прав доступа')
+    }
+
+    const hasDirectPermission = !!userPermissions
+    const hasRolePermission = rolePermissions && rolePermissions.length > 0
+
+    if (!hasDirectPermission && !hasRolePermission) {
       throw new Error('Недостаточно прав для присуждения достижений')
     }
   }
