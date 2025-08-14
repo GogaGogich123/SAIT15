@@ -19,7 +19,7 @@ import ModernBackground from '../components/ModernBackground';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
-  getTasks, 
+  getTasksWithParticipantCounts, 
   getTaskSubmissions, 
   takeTask, 
   submitTask, 
@@ -52,7 +52,7 @@ const TasksPage: React.FC = () => {
         setLoading(true);
         
         // Получаем все активные задания
-        const tasksData = await getTasks();
+        const tasksData = await getTasksWithParticipantCounts();
         
         // Получаем сдачи заданий текущего кадета
         const submissionsData = await getTaskSubmissions(user.cadetId);
@@ -143,7 +143,7 @@ const TasksPage: React.FC = () => {
       
       // Перезагружаем данные для синхронизации с базой данных
       const [tasksData, submissionsData] = await Promise.all([
-        getTasks(),
+        getTasksWithParticipantCounts(),
         getTaskSubmissions(user.cadetId)
       ]);
       
@@ -196,7 +196,7 @@ const TasksPage: React.FC = () => {
       
       // Перезагружаем данные для синхронизации с базой данных
       const [tasksData, submissionsData] = await Promise.all([
-        getTasks(),
+        getTasksWithParticipantCounts(),
         getTaskSubmissions(user.cadetId)
       ]);
       
