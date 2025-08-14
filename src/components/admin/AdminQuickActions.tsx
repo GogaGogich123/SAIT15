@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 
 interface AdminQuickActionsProps {
   onCreateAchievement: () => void;
-  onAwardAchievement?: () => void;
+  onAwardAchievement: () => void;
   onAddScore: () => void;
   onCreateNews: () => void;
   onCreateCadet: () => void;
@@ -47,7 +47,7 @@ const AdminQuickActions: React.FC<AdminQuickActionsProps> = ({
           </button>
         )}
         
-        {hasPermission('award_achievements') && onAwardAchievement && (
+        {hasPermission('award_achievements') && (
           <button
             onClick={onAwardAchievement}
             className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 flex items-center space-x-2"
