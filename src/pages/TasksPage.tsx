@@ -19,7 +19,6 @@ import ModernBackground from '../components/ModernBackground';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { 
-  getTasks, 
   getTaskSubmissions, 
   takeTask, 
   submitTask, 
@@ -27,6 +26,7 @@ import {
   type Task,
   type TaskSubmission
 } from '../lib/tasks';
+import { getTasks } from '../lib/supabase';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
 interface TaskWithSubmission extends Task {

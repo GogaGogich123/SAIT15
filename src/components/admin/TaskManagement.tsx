@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  getTasks, 
   getAllTaskSubmissions,
   createTask,
   updateTask,
@@ -29,6 +28,7 @@ import {
   type Task,
   type TaskSubmission
 } from '../../lib/tasks';
+import { getTasks } from '../../lib/supabase';
 import TaskModal from './modals/TaskModal';
 import TaskReviewModal from './modals/TaskReviewModal';
 import { staggerContainer, staggerItem } from '../../utils/animations';
