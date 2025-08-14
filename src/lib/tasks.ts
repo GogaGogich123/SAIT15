@@ -224,15 +224,14 @@ export const updateTask = async (taskId: string, updates: Partial<Task>): Promis
 };
 
 export const deleteTask = async (taskId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('tasks')
-    .delete()
-    .eq('id', taskId);
-  
-  if (error) throw error;
-  
-  // Очищаем кэш заданий после удаления
-  cache.delete(CACHE_KEYS.TASKS);
+  try {
+    await callEdgeFunction('delete-task', { taskId }, 'DELETE');
+    // Очищаем кэш заданий после удаления
+    cache.delete(CACHE_KEYS.TASKS);
+  } catch (error) {
+    console.error('Delete task failed', error);
+    throw error;
+  }
 };
 
 export const reviewTaskSubmission = async (
