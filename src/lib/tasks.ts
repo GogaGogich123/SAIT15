@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { updateCadetScoresAdmin } from './admin';
 
 // Функция для получения токена авторизации
 const getAuthToken = async () => {
@@ -238,6 +239,27 @@ export const reviewTaskSubmission = async (
   pointsAwarded: number = 0,
   reviewerId: string
 ): Promise<void> => {
+  // Сначала получаем данные о сдаче задания для получения информации о задании и кадете
+  const { data: submission, error: fetchError } = await supabase
+    .from('task_submissions')
+    .select(`
+      *,
+      task:tasks(*),
+      cadet:cadets(*)
+    `)
+    .eq('id', submissionId)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching submission for review:', fetchError);
+    throw new Error('Ошибка получения данных о сдаче задания');
+  }
+
+  if (!submission || !submission.task || !submission.cadet) {
+    throw new Error('Данные о задании или кадете не найдены');
+  }
+
+  // Обновляем статус сдачи задания
   const { error } = await supabase
     .from('task_submissions')
     .update({
@@ -251,4 +273,29 @@ export const reviewTaskSubmission = async (
     .eq('id', submissionId);
   
   if (error) throw error;
+
+  // Если задание принято и есть баллы для начисления, добавляем их в систему баллов
+  if (status === 'completed' && pointsAwarded > 0) {
+    try {
+      console.log('Adding points for completed task:', {
+        cadetId: submission.cadet_id,
+        category: submission.task.category,
+        points: pointsAwarded,
+        taskTitle: submission.task.title
+      });
+
+      await updateCadetScoresAdmin(
+        submission.cadet_id,
+        submission.task.category,
+        pointsAwarded,
+        `Баллы за выполнение задания: ${submission.task.title}`
+      );
+
+      console.log('Points successfully added for completed task');
+    } catch (scoreError) {
+      console.error('Error adding points for completed task:', scoreError);
+      // Не прерываем выполнение, так как задание уже проверено
+      // Администратор может начислить баллы вручную
+    }
+  }
 };
