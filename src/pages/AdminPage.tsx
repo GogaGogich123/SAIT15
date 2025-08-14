@@ -363,15 +363,21 @@ const AdminPage: React.FC = () => {
 
   const handleSubmitEvent = async () => {
     try {
+      // Convert empty time string to null for database compatibility
+      const eventData = {
+        ...eventForm,
+        event_time: eventForm.event_time === '' ? null : eventForm.event_time
+      };
+      
       if (eventModal.isEditing && eventModal.event) {
-        await updateEvent(eventModal.event.id, eventForm);
+        await updateEvent(eventModal.event.id, eventData);
         setEvents(events.map(e => 
-          e.id === eventModal.event!.id ? { ...e, ...eventForm } : e
+          e.id === eventModal.event!.id ? { ...e, ...eventData } : e
         ));
         alert('Событие обновлено');
       } else {
         const newEvent = await createEvent({
-          ...eventForm,
+          ...eventData,
           status: 'active',
           participants_count: 0,
           created_at: new Date().toISOString(),
