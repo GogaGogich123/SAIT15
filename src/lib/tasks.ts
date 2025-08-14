@@ -68,26 +68,6 @@ export interface TaskSubmission {
   task?: Task;
   cadet?: {
     name: string;
-    avatar_url?: string;
-    platoon: string;
-    squad: number;
-    email: string;
-  };
-}
-
-// Task functions
-export const getTasks = async (): Promise<Task[]> => {
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('status', 'active')
-    .eq('is_active', true)
-    .order('deadline', { ascending: true });
-  
-  if (error) throw error;
-  return data || [];
-};
-
 export const getTaskById = async (taskId: string): Promise<Task | null> => {
   const { data, error } = await supabase
     .from('tasks')

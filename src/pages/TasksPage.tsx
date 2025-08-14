@@ -52,7 +52,7 @@ const TasksPage: React.FC = () => {
         setLoading(true);
         
         // Получаем все активные задания
-        const tasksData = await getTasks();
+        const tasksData = await getTasksWithParticipantCounts();
         
         // Получаем сдачи заданий текущего кадета
         const submissionsData = await getTaskSubmissions(user.cadetId);
@@ -78,6 +78,31 @@ const TasksPage: React.FC = () => {
 
     fetchTasks();
   }, [user?.cadetId]);
+
+  // Функция для обновления данных заданий
+  const refreshTasksData = async () => {
+    if (!user?.cadetId) return;
+    
+    try {
+      const [tasksData, submissionsData] = await Promise.all([
+        getTasksWithParticipantCounts(),
+        getTaskSubmissions(user.cadetId)
+      ]);
+      
+      const tasksWithSubmissions: TaskWithSubmission[] = tasksData.map(task => {
+        const submission = submissionsData.find(s => s.task_id === task.id);
+        return {
+          ...task,
+          submission,
+          userStatus: submission ? submission.status : 'available'
+        };
+      });
+      
+      setTasks(tasksWithSubmissions);
+    } catch (error) {
+      console.error('Error refreshing tasks data:', error);
+    }
+  };
 
   const categories = [
     { key: 'all', name: 'Все задания', icon: CheckSquare, color: 'from-gray-600 to-gray-800' },
@@ -141,23 +166,8 @@ const TasksPage: React.FC = () => {
     try {
       await takeTask(taskId, user.cadetId);
       
-      // Перезагружаем данные для синхронизации с базой данных
-      const [tasksData, submissionsData] = await Promise.all([
-        getTasks(),
-        getTaskSubmissions(user.cadetId)
-      ]);
-      
-      const tasksWithSubmissions: TaskWithSubmission[] = tasksData.map(task => {
-        const submission = submissionsData.find(s => s.task_id === task.id);
-        return {
-          ...task,
-          submission,
-          userStatus: submission ? submission.status : 'available'
-        };
-      });
-      
-      setTasks(tasksWithSubmissions);
-      alert('Задание успешно взято');
+      // Обновляем данные заданий
+      await refreshTasksData();
     } catch (error) {
       console.error('Error taking task:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ошибка при взятии задания';
@@ -187,30 +197,11 @@ const TasksPage: React.FC = () => {
   const handleAbandonTask = async (taskId: string) => {
     if (!user?.cadetId) return;
     
-    if (!confirm('Вы уверены, что хотите отказаться от задания? Может быть применен штраф.')) {
-      return;
-    }
-    
     try {
       await abandonTask(taskId, user.cadetId);
       
-      // Перезагружаем данные для синхронизации с базой данных
-      const [tasksData, submissionsData] = await Promise.all([
-        getTasks(),
-        getTaskSubmissions(user.cadetId)
-      ]);
-      
-      const tasksWithSubmissions: TaskWithSubmission[] = tasksData.map(task => {
-        const submission = submissionsData.find(s => s.task_id === task.id);
-        return {
-          ...task,
-          submission,
-          userStatus: submission ? submission.status : 'available'
-        };
-      });
-      
-      setTasks(tasksWithSubmissions);
-      alert('Отказ от задания зафиксирован');
+      // Обновляем данные заданий
+      await refreshTasksData();
     } catch (error) {
       console.error('Error abandoning task:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ошибка при отказе от задания';
