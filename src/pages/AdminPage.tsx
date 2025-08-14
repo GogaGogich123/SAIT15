@@ -197,8 +197,6 @@ const AdminPage: React.FC = () => {
 
     loadData();
 
-  }, [isAdmin, refreshPermissions]);
-
   // Achievement handlers
   const handleCreateAchievement = () => {
     setAchievementForm({
