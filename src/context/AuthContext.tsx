@@ -20,6 +20,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   hasPermission: (permissionName: string) => boolean;
+  refreshPermissions: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +35,30 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+
+  const refreshPermissions = async (): Promise<void> => {
+    if (!user) return;
+
+    try {
+      // If this is an admin, refresh roles and permissions
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        const [adminRoles, permissions] = await Promise.all([
+          getUserRoles(user.id),
+          getUserPermissions(user.id)
+        ]);
+        
+        setUser(prevUser => ({
+          ...prevUser!,
+          adminRoles,
+          permissions
+        }));
+        
+        console.log('Permissions refreshed:', permissions.map(p => p.name));
+      }
+    } catch (error) {
+      console.error('Error refreshing permissions:', error);
+    }
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -225,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin, isSuperAdmin, hasPermission }}>
+    <AuthContext.Provider value={{ user, login, logout, isAdmin, isSuperAdmin, hasPermission, refreshPermissions }}>
       {children}
     </AuthContext.Provider>
   );
