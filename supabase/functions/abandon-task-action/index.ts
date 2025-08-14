@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
 
     // Применяем штраф за отказ, если он есть
     if (task.abandon_penalty > 0) {
-      // Добавляем запись в историю баллов со штрафом
+      // 1. Добавляем запись в историю баллов со штрафом
       const { error: penaltyError } = await supabaseAdmin
         .from('score_history')
         .insert([{
@@ -109,9 +109,87 @@ Deno.serve(async (req) => {
 
       if (penaltyError) {
         console.error('Error applying abandon penalty:', penaltyError)
-        // Не критично, продолжаем
+        throw new Error(`Ошибка применения штрафа: ${penaltyError.message}`)
       } else {
         console.log('Abandon penalty applied:', task.abandon_penalty)
+      }
+
+      // 2. Получаем текущие баллы кадета
+      const { data: currentScores, error: fetchScoresError } = await supabaseAdmin
+        .from('scores')
+        .select('*')
+        .eq('cadet_id', cadetId)
+        .maybeSingle()
+
+      if (fetchScoresError && fetchScoresError.code !== 'PGRST116') {
+        console.error('Error fetching current scores:', fetchScoresError)
+        throw new Error(`Ошибка получения текущих баллов: ${fetchScoresError.message}`)
+      }
+
+      // 3. Вычисляем новые баллы с учетом штрафа
+      const newScores = {
+        study_score: currentScores?.study_score || 0,
+        discipline_score: currentScores?.discipline_score || 0,
+        events_score: currentScores?.events_score || 0
+      }
+
+      // Вычитаем штраф из соответствующей категории
+      if (task.category === 'study') {
+        newScores.study_score = Math.max(0, newScores.study_score - task.abandon_penalty)
+      } else if (task.category === 'discipline') {
+        newScores.discipline_score = Math.max(0, newScores.discipline_score - task.abandon_penalty)
+      } else if (task.category === 'events') {
+        newScores.events_score = Math.max(0, newScores.events_score - task.abandon_penalty)
+      }
+
+      const totalScore = newScores.study_score + newScores.discipline_score + newScores.events_score
+
+      console.log('Calculated new scores after penalty:', { ...newScores, totalScore })
+
+      // 4. Обновляем или создаем запись в таблице scores
+      if (currentScores) {
+        const { error: updateScoresError } = await supabaseAdmin
+          .from('scores')
+          .update({
+            ...newScores,
+            updated_at: new Date().toISOString()
+          })
+          .eq('cadet_id', cadetId)
+
+        if (updateScoresError) {
+          console.error('Error updating scores after penalty:', updateScoresError)
+          throw new Error(`Ошибка обновления баллов после штрафа: ${updateScoresError.message}`)
+        }
+      } else {
+        const { error: insertScoresError } = await supabaseAdmin
+          .from('scores')
+          .insert([{
+            cadet_id: cadetId,
+            ...newScores
+          }])
+
+        if (insertScoresError) {
+          console.error('Error inserting scores after penalty:', insertScoresError)
+          throw new Error(`Ошибка создания баллов после штрафа: ${insertScoresError.message}`)
+        }
+      }
+
+      console.log('Scores updated successfully after penalty application')
+
+      // 5. Обновляем общий балл кадета (триггеры базы данных должны это сделать автоматически, но делаем явно для надежности)
+      const { error: updateCadetError } = await supabaseAdmin
+        .from('cadets')
+        .update({
+          total_score: totalScore,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', cadetId)
+
+      if (updateCadetError) {
+        console.error('Error updating cadet total score after penalty:', updateCadetError)
+        // Не критично, так как триггеры должны это сделать
+      } else {
+        console.log('Cadet total score updated after penalty application')
       }
     }
 
