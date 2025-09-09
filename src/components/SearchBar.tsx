@@ -9,7 +9,7 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  placeholder = 'Поиск...',
+  placeholder = 'Поиск кадетов...',
   onSearch,
   className = ''
 }) => {

@@ -23,6 +23,7 @@ import AdminQuickActions from '../components/admin/AdminQuickActions';
 import { ScoreManagement } from '../components/admin/ScoreManagement';
 import AdminManagement from '../components/admin/AdminManagement';
 import TaskManagement from '../components/admin/TaskManagement';
+import PrefixManagement from '../components/admin/PrefixManagement';
 import AchievementModal from '../components/admin/modals/AchievementModal';
 import CadetModal from '../components/admin/modals/CadetModal';
 import EventModal from '../components/admin/modals/EventModal';
@@ -789,6 +790,10 @@ const AdminPage: React.FC = () => {
 
               {activeTab === 'tasks' && hasPermission('manage_tasks') && (
                 <TaskManagement />
+              )}
+
+              {activeTab === 'prefixes' && hasPermission('manage_cadets') && (
+                <PrefixManagement />
               )}
             </>
           )}

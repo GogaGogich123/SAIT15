@@ -246,7 +246,7 @@ const CadetProfile: React.FC = () => {
               <motion.h1
                 className="text-5xl font-display font-black text-white mb-4 text-shadow text-glow"
               >
-                {cadet.name}
+                {cadet.display_name || cadet.name}
               </motion.h1>
               <motion.p
                 className="text-blue-200 text-2xl mb-6 font-semibold"

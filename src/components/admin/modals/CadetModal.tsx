@@ -193,6 +193,9 @@ const CadetModal: React.FC<CadetModalProps> = ({
                     {form.platoon && form.squad && (
                       <p className="text-blue-200">{form.platoon} взвод, {form.squad} отделение</p>
                     )}
+                    <p className="text-yellow-400 text-sm mt-1">
+                      Префиксы можно назначить после создания кадета
+                    </p>
                   </div>
                 </div>
               </div>

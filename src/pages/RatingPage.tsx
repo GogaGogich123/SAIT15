@@ -287,7 +287,7 @@ const RatingPage: React.FC = () => {
                     {/* Info */}
                     <div className="flex-grow">
                       <h3 className="text-2xl font-bold text-white group-hover:text-yellow-300 transition-colors text-shadow">
-                        {cadet.name}
+                        {cadet.display_name || cadet.name}
                       </h3>
                       <p className="text-blue-300 text-lg">
                         {cadet.platoon} взвод, {cadet.squad} отделение

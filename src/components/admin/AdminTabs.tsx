@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, Users, Trophy, Target, FileText, CheckSquare, Calendar, Database } from 'lucide-react';
+import { BarChart3, Users, Trophy, Target, FileText, CheckSquare, Calendar, Database, Crown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { staggerContainer, staggerItem } from '../../utils/animations';
 
@@ -16,6 +16,7 @@ const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
     { key: 'overview', name: 'Обзор', icon: BarChart3 },
     { key: 'admins', name: 'Администраторы', icon: Users, permission: 'manage_admins' },
     { key: 'cadets', name: 'Кадеты', icon: Users, permission: 'manage_cadets' },
+    { key: 'prefixes', name: 'Префиксы', icon: Crown, permission: 'manage_cadets' },
     { key: 'achievements', name: 'Достижения', icon: Trophy, permission: 'manage_achievements' },
     { key: 'scores', name: 'Управление баллами', icon: Target, permission: 'manage_scores' },
     { key: 'news', name: 'Новости', icon: FileText, permission: 'manage_news' },

@@ -11,6 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface Cadet {
   id: string;
   name: string;
+  display_name?: string;
   platoon: string;
   squad: number;
   rank: number;
@@ -121,16 +122,20 @@ export const getCadets = async (): Promise<Cadet[]> => {
   
   const { data, error } = await supabase
     .from('cadets')
-    .select(`
-      *,
-      scores:scores(study_score, discipline_score, events_score)
-    `)
+    .select('*')
     .order('rank', { ascending: true });
   
   if (error) throw error;
   
   // Обрабатываем данные и добавляем последние изменения баллов
   const result = await Promise.all((data || []).map(async (cadet) => {
+    // Получаем баллы кадета
+    const { data: scores } = await supabase
+      .from('scores')
+      .select('study_score, discipline_score, events_score')
+      .eq('cadet_id', cadet.id)
+      .maybeSingle();
+
     // Получаем последнее изменение баллов
     const { data: lastScoreChange } = await supabase
       .from('score_history')
@@ -142,9 +147,9 @@ export const getCadets = async (): Promise<Cadet[]> => {
 
     return {
       ...cadet,
-      study_score: cadet.scores?.[0]?.study_score || 0,
-      discipline_score: cadet.scores?.[0]?.discipline_score || 0,
-      events_score: cadet.scores?.[0]?.events_score || 0,
+      study_score: scores?.study_score || 0,
+      discipline_score: scores?.discipline_score || 0,
+      events_score: scores?.events_score || 0,
       last_score_change: lastScoreChange?.points || 0,
       last_score_change_date: lastScoreChange?.created_at || null
     };

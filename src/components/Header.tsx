@@ -86,7 +86,10 @@ const Header: React.FC = () => {
               <>
                 {/* Search Bar */}
                 <div className="hidden lg:block">
-                  <SearchBar placeholder="Поиск кадетов..." />
+                  <SearchBar placeholder="Поиск кадетов..." onSearch={(query) => {
+                    // Можно добавить логику поиска по префиксам
+                    console.log('Search query:', query);
+                  }} />
                 </div>
                 
                 {user.role === 'cadet' && (
@@ -164,7 +167,9 @@ const Header: React.FC = () => {
                 
                 {/* Mobile Search */}
                 <div className="pt-4 border-t border-white/20">
-                  <SearchBar placeholder="Поиск кадетов..." />
+                  <SearchBar placeholder="Поиск кадетов..." onSearch={(query) => {
+                    console.log('Mobile search query:', query);
+                  }} />
                 </div>
               </nav>
             </motion.div>
