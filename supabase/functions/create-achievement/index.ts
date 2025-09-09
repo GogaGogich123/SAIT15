@@ -1,58 +1,30 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+  try {
+    const { data: hasPermission, error: permError } = await supabaseAdmin
+      .rpc('user_has_permission', { 
+        user_id: user.id, 
+        permission_name: 'manage_achievements' 
+      })
 
-// Функция для проверки роли администратора и разрешений
-async function checkAdminPermissions(authHeader: string | null, supabaseAdmin: any) {
-  if (!authHeader) {
-    throw new Error('Отсутствует токен авторизации')
-  }
-
-  const token = authHeader.replace('Bearer ', '')
-  
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-  
-  if (authError || !user) {
-    throw new Error('Недействительный токен авторизации')
-  }
-
-  // Проверяем роль пользователя в таблице users
-  const { data: userData, error: userError } = await supabaseAdmin
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (userError || !userData) {
-    throw new Error('Пользователь не найден')
-  }
-
-  if (userData.role !== 'admin' && userData.role !== 'super_admin') {
-    throw new Error('Недостаточно прав доступа')
-  }
-
-  // Проверяем разрешение manage_achievements
-  const { data: hasPermission, error: permError } = await supabaseAdmin
-    .rpc('user_has_permission', { 
-      user_id: user.id, 
-      permission_name: 'manage_achievements' 
-    })
-
-  if (permError) {
-    console.error('Error checking manage_achievements permission:', permError)
-    // Если функция не существует, проверяем роль
-    if (userData.role === 'admin' || userData.role === 'super_admin') {
-      return user
+    if (permError) {
+      console.error('Error checking manage_achievements permission:', permError)
+      // If RPC doesn't exist, allow admin role
+      if (userData.role === 'admin') {
+        return user
+      }
+      throw new Error('Ошибка проверки прав доступа')
     }
-    throw new Error('Ошибка проверки прав доступа')
-  }
 
-  if (!hasPermission && userData.role !== 'super_admin') {
-    throw new Error('Недостаточно прав для управления достижениями')
+    if (!hasPermission) {
+      throw new Error('Недостаточно прав для управления достижениями')
+    }
+  } catch (rpcError) {
+    console.error('RPC error, falling back to role check:', rpcError)
+    // Fallback to role-based check if RPC fails
+    if (userData.role !== 'admin') {
+      throw new Error('Недостаточно прав для управления достижениями')
+    }
   }
 
   return user

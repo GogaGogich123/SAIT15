@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 // Функция для проверки роли администратора
-async function checkAdminRole(authHeader: string | null, supabaseAdmin: any) {
+async function checkAdminPermissions(authHeader: string | null, supabaseAdmin: any) {
   if (!authHeader) {
     throw new Error('Отсутствует токен авторизации')
   }
@@ -34,6 +34,39 @@ async function checkAdminRole(authHeader: string | null, supabaseAdmin: any) {
     throw new Error('Недостаточно прав доступа')
   }
 
+  // Super admins always have permission
+  if (userData.role === 'super_admin') {
+    return user
+  }
+
+  // For regular admins, check specific permission
+  try {
+    const { data: hasPermission, error: permError } = await supabaseAdmin
+      .rpc('user_has_permission', { 
+        user_id: user.id, 
+        permission_name: 'manage_cadets' 
+      })
+
+    if (permError) {
+      console.error('Error checking manage_cadets permission:', permError)
+      // If RPC doesn't exist, allow admin role
+      if (userData.role === 'admin') {
+        return user
+      }
+      throw new Error('Ошибка проверки прав доступа')
+    }
+
+    if (!hasPermission) {
+      throw new Error('Недостаточно прав для управления кадетами')
+    }
+  } catch (rpcError) {
+    console.error('RPC error, falling back to role check:', rpcError)
+    // Fallback to role-based check if RPC fails
+    if (userData.role !== 'admin') {
+      throw new Error('Недостаточно прав для управления кадетами')
+    }
+  }
+
   return user
 }
 
@@ -55,7 +88,7 @@ Deno.serve(async (req) => {
     )
 
     const authHeader = req.headers.get('Authorization')
-    const adminUser = await checkAdminRole(authHeader, supabaseAdmin)
+    const adminUser = await checkAdminPermissions(authHeader, supabaseAdmin)
 
     const { cadetId, prefixId } = await req.json()
 

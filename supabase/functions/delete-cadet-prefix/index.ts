@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
 }
 
-// Функция для проверки роли администратора
+// Функция для проверки роли администратора и разрешений
 async function checkAdminPermissions(authHeader: string | null, supabaseAdmin: any) {
   if (!authHeader) {
     throw new Error('Отсутствует токен авторизации')
@@ -90,12 +90,12 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     const adminUser = await checkAdminPermissions(authHeader, supabaseAdmin)
 
-    const { cadetId, prefixId } = await req.json()
+    const { prefixId } = await req.json()
 
     // Validate required fields
-    if (!cadetId || !prefixId) {
+    if (!prefixId) {
       return new Response(
-        JSON.stringify({ error: 'Отсутствуют обязательные поля' }),
+        JSON.stringify({ error: 'Отсутствует ID префикса' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -103,24 +103,18 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Removing prefix from cadet:', { cadetId, prefixId })
+    console.log('Deleting cadet prefix:', { prefixId })
 
-    // Проверяем, что назначение существует
-    const { data: assignment, error: fetchError } = await supabaseAdmin
-      .from('cadet_assigned_prefixes')
-      .select(`
-        *,
-        cadet:cadets(name),
-        prefix:cadet_prefixes(display_name)
-      `)
-      .eq('cadet_id', cadetId)
-      .eq('prefix_id', prefixId)
-      .eq('is_active', true)
+    // Проверяем, что префикс существует
+    const { data: existingPrefix, error: fetchError } = await supabaseAdmin
+      .from('cadet_prefixes')
+      .select('display_name')
+      .eq('id', prefixId)
       .single()
 
-    if (fetchError || !assignment) {
+    if (fetchError || !existingPrefix) {
       return new Response(
-        JSON.stringify({ error: 'Назначение префикса не найдено' }),
+        JSON.stringify({ error: 'Префикс не найден' }),
         { 
           status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -128,23 +122,46 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Деактивируем назначение префикса
-    const { error: removeError } = await supabaseAdmin
+    // Проверяем, не назначен ли префикс каким-либо кадетам
+    const { data: assignments, error: assignmentError } = await supabaseAdmin
       .from('cadet_assigned_prefixes')
-      .update({ is_active: false })
-      .eq('id', assignment.id)
+      .select('id')
+      .eq('prefix_id', prefixId)
+      .eq('is_active', true)
+      .limit(1)
 
-    if (removeError) {
-      console.error('Error removing prefix assignment:', removeError)
-      throw new Error(`Ошибка удаления назначения префикса: ${removeError.message}`)
+    if (assignmentError) {
+      console.error('Error checking prefix assignments:', assignmentError)
+      throw new Error(`Ошибка проверки назначений префикса: ${assignmentError.message}`)
     }
 
-    console.log('Prefix assignment removed successfully')
+    if (assignments && assignments.length > 0) {
+      return new Response(
+        JSON.stringify({ error: 'Нельзя удалить префикс, который назначен кадетам' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Удаляем префикс
+    const { error: deleteError } = await supabaseAdmin
+      .from('cadet_prefixes')
+      .delete()
+      .eq('id', prefixId)
+
+    if (deleteError) {
+      console.error('Prefix deletion error:', deleteError)
+      throw new Error(`Ошибка удаления префикса: ${deleteError.message}`)
+    }
+
+    console.log('Prefix deleted successfully')
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Префикс "${assignment.prefix?.display_name}" успешно удален у кадета ${assignment.cadet?.name}`
+        message: `Префикс "${existingPrefix.display_name}" успешно удален`
       }),
       { 
         status: 200, 

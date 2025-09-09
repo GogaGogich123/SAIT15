@@ -3,10 +3,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'PUT, OPTIONS',
 }
 
-// Функция для проверки роли администратора
+// Функция для проверки роли администратора и разрешений
 async function checkAdminPermissions(authHeader: string | null, supabaseAdmin: any) {
   if (!authHeader) {
     throw new Error('Отсутствует токен авторизации')
@@ -90,12 +90,12 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     const adminUser = await checkAdminPermissions(authHeader, supabaseAdmin)
 
-    const { cadetId, prefixId } = await req.json()
+    const { prefixId, updates } = await req.json()
 
     // Validate required fields
-    if (!cadetId || !prefixId) {
+    if (!prefixId) {
       return new Response(
-        JSON.stringify({ error: 'Отсутствуют обязательные поля' }),
+        JSON.stringify({ error: 'Отсутствует ID префикса' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -103,24 +103,28 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Removing prefix from cadet:', { cadetId, prefixId })
+    if (!updates || Object.keys(updates).length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Отсутствуют данные для обновления' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
 
-    // Проверяем, что назначение существует
-    const { data: assignment, error: fetchError } = await supabaseAdmin
-      .from('cadet_assigned_prefixes')
-      .select(`
-        *,
-        cadet:cadets(name),
-        prefix:cadet_prefixes(display_name)
-      `)
-      .eq('cadet_id', cadetId)
-      .eq('prefix_id', prefixId)
-      .eq('is_active', true)
+    console.log('Updating cadet prefix:', { prefixId, updates })
+
+    // Проверяем, что префикс существует
+    const { data: existingPrefix, error: fetchError } = await supabaseAdmin
+      .from('cadet_prefixes')
+      .select('*')
+      .eq('id', prefixId)
       .single()
 
-    if (fetchError || !assignment) {
+    if (fetchError || !existingPrefix) {
       return new Response(
-        JSON.stringify({ error: 'Назначение префикса не найдено' }),
+        JSON.stringify({ error: 'Префикс не найден' }),
         { 
           status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -128,23 +132,54 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Деактивируем назначение префикса
-    const { error: removeError } = await supabaseAdmin
-      .from('cadet_assigned_prefixes')
-      .update({ is_active: false })
-      .eq('id', assignment.id)
+    // Если обновляется имя, проверяем уникальность
+    if (updates.name && updates.name !== existingPrefix.name) {
+      const { data: nameCheck, error: nameError } = await supabaseAdmin
+        .from('cadet_prefixes')
+        .select('id')
+        .eq('name', updates.name)
+        .neq('id', prefixId)
+        .maybeSingle()
 
-    if (removeError) {
-      console.error('Error removing prefix assignment:', removeError)
-      throw new Error(`Ошибка удаления назначения префикса: ${removeError.message}`)
+      if (nameError) {
+        console.error('Error checking name uniqueness:', nameError)
+        throw new Error(`Ошибка проверки уникальности имени: ${nameError.message}`)
+      }
+
+      if (nameCheck) {
+        return new Response(
+          JSON.stringify({ error: 'Префикс с таким именем уже существует' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
     }
 
-    console.log('Prefix assignment removed successfully')
+    // Обновляем префикс
+    const { data: updatedPrefix, error: updateError } = await supabaseAdmin
+      .from('cadet_prefixes')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', prefixId)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('Prefix update error:', updateError)
+      throw new Error(`Ошибка обновления префикса: ${updateError.message}`)
+    }
+
+    console.log('Prefix updated successfully:', updatedPrefix)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Префикс "${assignment.prefix?.display_name}" успешно удален у кадета ${assignment.cadet?.name}`
+        message: 'Префикс успешно обновлен',
+        prefix: updatedPrefix
       }),
       { 
         status: 200, 

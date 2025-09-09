@@ -78,7 +78,7 @@ export const getCadetAssignedPrefixes = async (cadetId: string): Promise<CadetAs
     `)
     .eq('cadet_id', cadetId)
     .eq('is_active', true)
-    .order('prefix.sort_order', { ascending: true });
+    .order('sort_order', { ascending: true, foreignTable: 'prefix' });
   
   if (error) throw error;
   return data || [];

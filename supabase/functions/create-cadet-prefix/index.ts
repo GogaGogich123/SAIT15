@@ -3,10 +3,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-// Функция для проверки роли администратора
+// Функция для проверки роли администратора и разрешений
 async function checkAdminPermissions(authHeader: string | null, supabaseAdmin: any) {
   if (!authHeader) {
     throw new Error('Отсутствует токен авторизации')
@@ -90,10 +90,10 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     const adminUser = await checkAdminPermissions(authHeader, supabaseAdmin)
 
-    const { cadetId, prefixId } = await req.json()
+    const { name, display_name, description, color, sort_order } = await req.json()
 
     // Validate required fields
-    if (!cadetId || !prefixId) {
+    if (!name || !display_name || !color) {
       return new Response(
         JSON.stringify({ error: 'Отсутствуют обязательные поля' }),
         { 
@@ -103,48 +103,56 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Removing prefix from cadet:', { cadetId, prefixId })
+    console.log('Creating cadet prefix:', { name, display_name, color })
 
-    // Проверяем, что назначение существует
-    const { data: assignment, error: fetchError } = await supabaseAdmin
-      .from('cadet_assigned_prefixes')
-      .select(`
-        *,
-        cadet:cadets(name),
-        prefix:cadet_prefixes(display_name)
-      `)
-      .eq('cadet_id', cadetId)
-      .eq('prefix_id', prefixId)
-      .eq('is_active', true)
-      .single()
+    // Проверяем, не существует ли уже префикс с таким именем
+    const { data: existingPrefix, error: checkError } = await supabaseAdmin
+      .from('cadet_prefixes')
+      .select('id')
+      .eq('name', name)
+      .maybeSingle()
 
-    if (fetchError || !assignment) {
+    if (checkError) {
+      console.error('Error checking existing prefix:', checkError)
+      throw new Error(`Ошибка проверки существующего префикса: ${checkError.message}`)
+    }
+
+    if (existingPrefix) {
       return new Response(
-        JSON.stringify({ error: 'Назначение префикса не найдено' }),
+        JSON.stringify({ error: 'Префикс с таким именем уже существует' }),
         { 
-          status: 404, 
+          status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
 
-    // Деактивируем назначение префикса
-    const { error: removeError } = await supabaseAdmin
-      .from('cadet_assigned_prefixes')
-      .update({ is_active: false })
-      .eq('id', assignment.id)
+    // Создаем новый префикс
+    const { data: newPrefix, error: createError } = await supabaseAdmin
+      .from('cadet_prefixes')
+      .insert([{
+        name,
+        display_name,
+        description: description || null,
+        color,
+        sort_order: sort_order || 0,
+        is_active: true
+      }])
+      .select()
+      .single()
 
-    if (removeError) {
-      console.error('Error removing prefix assignment:', removeError)
-      throw new Error(`Ошибка удаления назначения префикса: ${removeError.message}`)
+    if (createError) {
+      console.error('Prefix creation error:', createError)
+      throw new Error(`Ошибка создания префикса: ${createError.message}`)
     }
 
-    console.log('Prefix assignment removed successfully')
+    console.log('Prefix created successfully:', newPrefix)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Префикс "${assignment.prefix?.display_name}" успешно удален у кадета ${assignment.cadet?.name}`
+        message: 'Префикс успешно создан',
+        prefix: newPrefix
       }),
       { 
         status: 200, 
