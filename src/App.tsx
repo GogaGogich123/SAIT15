@@ -14,6 +14,7 @@ import ForumPage from './pages/ForumPage';
 import ForumTopicPage from './pages/ForumTopicPage';
 import CreateTopicPage from './pages/CreateTopicPage';
 import EventsPage from './pages/EventsPage';
+import CouncilPage from './pages/CouncilPage';
 import { AuthProvider } from './context/AuthContext';
 
 const AppContent: React.FC = () => {
@@ -29,6 +30,7 @@ const AppContent: React.FC = () => {
             <Route path="/forum" element={<ForumPage />} />
             <Route path="/forum/topic/:id" element={<ForumTopicPage />} />
             <Route path="/forum/create-topic" element={<CreateTopicPage />} />
+            <Route path="/council" element={<CouncilPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/tasks" element={<TasksPage />} />

@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   MessageSquare,
-  Calendar
+  Calendar,
+  Crown
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from './SearchBar';
@@ -36,6 +37,7 @@ const Header: React.FC = () => {
   const navItems = [
     { path: '/', name: 'Главная', icon: Home },
     { path: '/rating', name: 'Рейтинг', icon: Award },
+    { path: '/council', name: 'Совет', icon: Crown },
     { path: '/forum', name: 'Форум', icon: MessageSquare },
     { path: '/events', name: 'События', icon: Calendar },
     { path: '/news', name: 'Новости', icon: Newspaper },
