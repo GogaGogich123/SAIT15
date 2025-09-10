@@ -103,6 +103,14 @@ const CouncilPage: React.FC = () => {
     }
   };
 
+  // Sort functions for manual sorting since Supabase ordering on foreign tables is complex
+  const sortPositionsByOrder = (positions: CouncilPosition[]) => {
+    return [...positions].sort((a, b) => a.sort_order - b.sort_order);
+  };
+
+  const sortStaffsByOrder = (staffs: CouncilStaff[]) => {
+    return [...staffs].sort((a, b) => a.sort_order - b.sort_order);
+  };
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -220,7 +228,7 @@ const CouncilPage: React.FC = () => {
               <motion.div variants={staggerItem}>
                 <h2 className="text-4xl font-bold text-white text-center mb-8">Штабы</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {staffs.map((staff) => {
+                  {sortStaffsByOrder(staffs).map((staff) => {
                     const commander = councilStructure.staffCommanders.find((c: CouncilMember) => c.staff_id === staff.id);
                     const members = councilStructure.staffMembers[staff.id] || [];
                     const StaffIcon = getIconComponent(staff.icon);
@@ -359,7 +367,7 @@ const CouncilPage: React.FC = () => {
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {positions.map((position) => {
+                  {sortPositionsByOrder(positions).map((position) => {
                     const PositionIcon = getIconComponent(position.icon);
                     return (
                       <div
@@ -398,7 +406,7 @@ const CouncilPage: React.FC = () => {
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {staffs.map((staff) => {
+                  {sortStaffsByOrder(staffs).map((staff) => {
                     const StaffIcon = getIconComponent(staff.icon);
                     const membersCount = councilStructure?.staffMembers[staff.id]?.length || 0;
                     const hasCommander = councilStructure?.staffCommanders.some((c: CouncilMember) => c.staff_id === staff.id);

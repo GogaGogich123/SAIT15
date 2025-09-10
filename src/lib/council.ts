@@ -127,8 +127,7 @@ export const getCouncilMembers = async (): Promise<CouncilMember[]> => {
       staff:council_staffs(*)
     `)
     .eq('is_active', true)
-    .order('position.sort_order', { ascending: true, foreignTable: 'position' })
-    .order('staff.sort_order', { ascending: true, foreignTable: 'staff' });
+    .order('created_at', { ascending: true });
   
   if (error) throw error;
   return data || [];
@@ -140,13 +139,13 @@ export const getCouncilHierarchy = async (): Promise<CouncilHierarchy[]> => {
     .from('council_hierarchy')
     .select(`
       *,
-      subordinate:council_members!council_hierarchy_subordinate_id_fkey(
+      subordinate:council_members!subordinate_id(
         *,
         cadet:cadets(name, display_name, avatar_url, platoon, squad),
         position:council_positions(*),
         staff:council_staffs(*)
       ),
-      superior:council_members!council_hierarchy_superior_id_fkey(
+      superior:council_members!superior_id(
         *,
         cadet:cadets(name, display_name, avatar_url, platoon, squad),
         position:council_positions(*),

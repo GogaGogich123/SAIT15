@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, X, Star, Crown, Shield, Users, BookOpen, Calendar, Trophy, Heart, Target, Award } from 'lucide-react';
+import { Save, X, Star, Crown, Shield, Users, BookOpen, Calendar, Trophy, Heart, Target, Award, Trash2 } from 'lucide-react';
 import {
   createCouncilPosition,
   updateCouncilPosition,

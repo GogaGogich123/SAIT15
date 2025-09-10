@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, X, Crown, Users } from 'lucide-react';
+import { Save, X, Crown, Users, Trash2 } from 'lucide-react';
 import {
   appointCouncilMember,
   updateCouncilMember,
@@ -173,9 +173,10 @@ const CouncilMemberModal: React.FC<CouncilMemberModalProps> = ({
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {positions.map((position) => {
-                const PositionIcon = [Crown, Shield, Star, Users].find(icon => 
-                  icon.name === position.icon
-                ) || Crown;
+                const iconMap: { [key: string]: any } = {
+                  Crown, Shield, Star, Users
+                };
+                const PositionIcon = iconMap[position.icon] || Crown;
                 
                 return (
                   <motion.label
@@ -214,9 +215,10 @@ const CouncilMemberModal: React.FC<CouncilMemberModalProps> = ({
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {staffs.map((staff) => {
-                  const StaffIcon = [BookOpen, Calendar, Trophy, Heart, Target].find(icon => 
-                    icon.name === staff.icon
-                  ) || Users;
+                  const iconMap: { [key: string]: any } = {
+                    BookOpen, Calendar, Trophy, Heart, Target, Users
+                  };
+                  const StaffIcon = iconMap[staff.icon] || Users;
                   
                   return (
                     <motion.label
