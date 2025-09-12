@@ -30,6 +30,7 @@ import EventModal from '../components/admin/modals/EventModal';
 import ScoreModal from '../components/admin/modals/ScoreModal';
 import AdminResetMenu from '../components/admin/AdminResetMenu';
 import AwardAchievementModal from '../components/admin/modals/AwardAchievementModal';
+import BulkCadetCreation from '../components/admin/BulkCadetCreation';
 import { 
   getCadets, 
   getAchievements, 
@@ -794,6 +795,10 @@ const AdminPage: React.FC = () => {
 
               {activeTab === 'prefixes' && hasPermission('manage_cadets') && (
                 <PrefixManagement />
+              )}
+
+              {activeTab === 'bulk-cadets' && hasPermission('manage_cadets') && (
+                <BulkCadetCreation />
               )}
             </>
           )}
