@@ -198,10 +198,42 @@ const PrefixManagement: React.FC = () => {
         <button
           onClick={handleCreatePrefix}
           className="btn-primary flex items-center space-x-2"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Создать префикс</span>
-        </button>
+                    <div className="mb-3">
+                      {/* Префиксы */}
+                      {loadingPrefixes ? (
+                        <div className="text-blue-400 text-sm mb-2">Загрузка префиксов...</div>
+                      ) : assignedPrefixes.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {assignedPrefixes.map((assignment) => {
+                            const prefix = assignment.prefix;
+                            if (!prefix) return null;
+                            
+                            return (
+                              <div
+                                key={assignment.id}
+                                className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r ${prefix.color} text-white text-sm font-bold shadow-lg border border-white/20 group relative overflow-hidden`}
+                              >
+                                <Crown className="h-3 w-3" />
+                                <span>{prefix.display_name}</span>
+                                <button
+                                  onClick={() => onRemovePrefix(cadet.id, prefix.id)}
+                                  className="opacity-0 group-hover:opacity-100 hover:bg-white/20 rounded-full p-1 transition-all ml-1"
+                                  title="Удалить префикс"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                                {/* Блеск эффект */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                      
+                      {/* Имя кадета */}
+                      <h4 className="text-xl font-bold text-white">
+                        {cadet.name}
+                      </h4>
       </motion.div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -209,36 +241,6 @@ const PrefixManagement: React.FC = () => {
         <motion.div variants={staggerItem} className="xl:col-span-1">
           <div className="card-hover p-6">
             <div className="flex items-center space-x-3 mb-6">
-              <Crown className="w-6 h-6 text-yellow-400" />
-              <h3 className="text-xl font-bold text-white">Доступные префиксы</h3>
-            </div>
-            
-            <div className="space-y-4">
-              {prefixes.map((prefix) => (
-                <motion.div
-                  key={prefix.id}
-                  whileHover={{ scale: 1.02, x: 5 }}
-                  className={`glass-effect p-4 rounded-xl border border-white/10 hover:border-blue-400/30 transition-all duration-300 bg-gradient-to-r ${prefix.color}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-lg font-bold text-white">{prefix.display_name}</h4>
-                      <p className="text-white/80 text-sm">{prefix.description}</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditPrefix(prefix)}
-                        className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition-colors"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeletePrefix(prefix.id)}
-                        className="bg-red-500/20 hover:bg-red-500/30 text-white p-2 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
                   </div>
                 </motion.div>
               ))}

@@ -13,7 +13,8 @@ import {
   UserPlus,
   FileSpreadsheet,
   Eye,
-  X
+  X,
+  Crown
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { createCadetWithAuth } from '../../lib/admin';

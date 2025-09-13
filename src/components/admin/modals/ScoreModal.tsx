@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, Save, X, Award, BookOpen, Users, Star, TrendingUp, Trophy } from 'lucide-react';
+import { Target, Save, X, Award, BookOpen, Users, Star, TrendingUp, Trophy, Crown } from 'lucide-react';
 import { Cadet } from '../../../lib/supabase';
 import { updateCadetScoresAdmin } from '../../../lib/admin';
 
@@ -171,16 +171,26 @@ const ScoreModal: React.FC<ScoreModalProps> = ({
                 className="mt-4 glass-effect p-4 rounded-xl border border-blue-400/30"
               >
                 <div className="flex items-center space-x-4">
+                  <div className="flex-grow">
+                    {/* Префиксы */}
+                    {selectedCadet.display_name && selectedCadet.display_name !== selectedCadet.name && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        <div className="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-gradient-to-r from-red-600 to-red-800 text-white text-xs font-bold shadow-md border border-white/20">
+                          <Crown className="h-3 w-3" />
+                          <span>Атаман</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <h4 className="text-lg font-bold text-white">{selectedCadet.name}</h4>
+                    <p className="text-blue-300">{selectedCadet.platoon} взвод • Рейтинг #{selectedCadet.rank}</p>
+                    <p className="text-yellow-400 font-bold">Текущий балл: {selectedCadet.total_score}</p>
+                  </div>
                   <img
                     src={selectedCadet.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?w=200'}
                     alt={selectedCadet.name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-blue-400"
                   />
-                  <div>
-                    <h4 className="text-lg font-bold text-white">{selectedCadet.name}</h4>
-                    <p className="text-blue-300">{selectedCadet.platoon} взвод • Рейтинг #{selectedCadet.rank}</p>
-                    <p className="text-yellow-400 font-bold">Текущий балл: {selectedCadet.total_score}</p>
-                  </div>
                 </div>
               </motion.div>
             )}

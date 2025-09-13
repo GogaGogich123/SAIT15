@@ -194,6 +194,16 @@ export function ScoreManagement() {
                         </div>
                       </div>
                       <div>
+                        {/* Префиксы */}
+                        {cadet.display_name && cadet.display_name !== cadet.name && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            <div className="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-gradient-to-r from-red-600 to-red-800 text-white text-xs font-bold shadow-md border border-white/20">
+                              <Crown className="h-3 w-3" />
+                              <span>Атаман</span>
+                            </div>
+                          </div>
+                        )}
+                        
                         <h4 className="text-xl font-bold text-white group-hover:text-yellow-300 transition-colors">
                           {cadet.name}
                         </h4>
