@@ -865,15 +865,6 @@ const AdminPage: React.FC = () => {
           />
 
           <AwardAchievementModal
-            isOpen={newsModal.isOpen}
-            onClose={() => setNewsModal({ isOpen: false, isEditing: false, newsItem: null })}
-            onSubmit={handleSubmitNews}
-            form={newsForm}
-            setForm={setNewsForm}
-            isEditing={newsModal.isEditing}
-          />
-
-          <AwardAchievementModal
             isOpen={awardAchievementModal.isOpen}
             onClose={() => setAwardAchievementModal({ isOpen: false })}
             onSubmit={handleSubmitAwardAchievement}
