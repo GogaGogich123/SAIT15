@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { cache } from './cache';
 import { CACHE_KEYS, CACHE_DURATION } from '../utils/constants';
+import { getRealAverageScore, getCategoryAverages } from './score-analytics';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -395,24 +396,62 @@ export const addScoreHistory = async (scoreData: Omit<ScoreHistory, 'id' | 'crea
 
 // Analytics functions
 export const getAnalytics = async () => {
-  // Получаем данные из Supabase
-  const cadets = await getCadets();
-  const tasks = await getTasks();
-  const achievements = await getAchievements();
+  try {
+    // Получаем данные из Supabase
+    const [cadets, tasks, achievements, realAvgScore, categoryAverages] = await Promise.all([
+      getCadets(),
+      getTasks(),
+      getAchievements(),
+      getRealAverageScore(),
+      getCategoryAverages()
+    ]);
+    
+    // Группируем кадетов по взводам для статистики
+    const platoonStats = cadets.reduce((acc: any[], cadet) => {
+      const existing = acc.find(p => p.platoon === cadet.platoon);
+      if (existing) {
+        existing.total_score += cadet.total_score;
+        existing.count += 1;
+      } else {
+        acc.push({
+          platoon: cadet.platoon,
+          total_score: cadet.total_score,
+          count: 1
+        });
+      }
+      return acc;
+    }, []);
+    
+    // Вычисляем средний балл по взводам
+    platoonStats.forEach(platoon => {
+      platoon.avg_score = Math.round(platoon.total_score / platoon.count);
+    });
   
-  // Возвращаем аналитику на основе полученных данных
-  return {
-    totalCadets: cadets.length,
-    totalTasks: tasks.length,
-    totalAchievements: achievements.length,
-    platoonStats: cadets.map(c => ({ platoon: c.platoon, total_score: c.total_score })),
-    avgScores: [
-      { study_score: 88, discipline_score: 84, events_score: 82 }
-    ],
-    topCadets: cadets.slice(0, 10).map(c => ({
-      name: c.name,
-      total_score: c.total_score,
-      platoon: c.platoon
-    }))
-  };
+    // Возвращаем аналитику на основе полученных данных
+    return {
+      totalCadets: cadets.length,
+      totalTasks: tasks.length,
+      totalAchievements: achievements.length,
+      realAverageScore: realAvgScore,
+      platoonStats,
+      avgScores: [categoryAverages], // Реальные средние баллы по категориям
+      topCadets: cadets.slice(0, 10).map(c => ({
+        name: c.name,
+        total_score: c.total_score,
+        platoon: c.platoon
+      }))
+    };
+  } catch (error) {
+    console.error('Error getting analytics:', error);
+    // Возвращаем базовые данные в случае ошибки
+    return {
+      totalCadets: 0,
+      totalTasks: 0,
+      totalAchievements: 0,
+      realAverageScore: 0,
+      platoonStats: [],
+      avgScores: [{ study: 0, discipline: 0, events: 0 }],
+      topCadets: []
+    };
+  }
 };

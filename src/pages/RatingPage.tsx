@@ -7,6 +7,7 @@ import ModernBackground from '../components/ModernBackground';
 import AnimatedSVGBackground from '../components/AnimatedSVGBackground';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getCadets, getCadetScores, type Cadet, type Score } from '../lib/supabase';
+import { getAllCadetsDailyChanges } from '../lib/score-analytics';
 import { fadeInUp, staggerContainer, staggerItem } from '../utils/animations';
 
 interface CadetWithScores extends Cadet {
@@ -24,6 +25,7 @@ const RatingPage: React.FC = () => {
   const [selectedSquad, setSelectedSquad] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [cadets, setCadets] = useState<CadetWithScores[]>([]);
+  const [dailyChanges, setDailyChanges] = useState<{ [cadetId: string]: number }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +37,7 @@ const RatingPage: React.FC = () => {
       try {
         setLoading(true);
         const cadetsData = await getCadets();
+        const dailyChangesData = await getAllCadetsDailyChanges();
         
         // Получаем баллы для каждого кадета
         const cadetsWithScores = await Promise.all(
@@ -66,6 +69,7 @@ const RatingPage: React.FC = () => {
         );
         
         setCadets(cadetsWithScores);
+        setDailyChanges(dailyChangesData);
       } catch (err) {
         console.error('Error fetching cadets:', err);
         setError('Ошибка загрузки данных кадетов');
@@ -105,10 +109,8 @@ const RatingPage: React.FC = () => {
     return 'from-blue-500 to-blue-700';
   };
 
-  const getScoreChange = (cadet: CadetWithScores) => {
-    // Mock data for score changes
-    const changes = [5, -2, 8, 3, -1, 12, 0, 4, -3, 7];
-    return changes[parseInt(cadet.id.slice(-1)) % changes.length] || 0;
+  const getScoreChange = (cadet: CadetWithScores): number => {
+    return dailyChanges[cadet.id] || 0;
   };
 
   return (
@@ -305,15 +307,6 @@ const RatingPage: React.FC = () => {
                              selectedCategory === 'events' ? cadet.scores.events :
                              cadet.scores.total}
                           </span>
-                          {(() => {
-                            const change = getScoreChange(cadet);
-                            if (change > 0) {
-                              return <TrendingUp className="h-5 w-5 text-green-400" />;
-                            } else if (change < 0) {
-                              return <TrendingDown className="h-5 w-5 text-red-400" />;
-                            }
-                            return null;
-                          })()}
                         </div>
                         <div className="text-sm text-blue-300 font-semibold">
                           {selectedCategory === 'total' ? 'Общий' :
@@ -326,8 +319,13 @@ const RatingPage: React.FC = () => {
                           const change = getScoreChange(cadet);
                           if (change !== 0) {
                             return (
-                              <div className={`text-sm font-bold ${change > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                {change > 0 ? '+' : ''}{change}
+                              <div className={`flex items-center space-x-1 text-sm font-bold ${change > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {change > 0 ? (
+                                  <TrendingUp className="h-4 w-4" />
+                                ) : (
+                                  <TrendingDown className="h-4 w-4" />
+                                )}
+                                <span>{change > 0 ? '+' : ''}{change} за день</span>
                               </div>
                             );
                           }

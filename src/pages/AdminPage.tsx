@@ -189,7 +189,8 @@ const AdminPage: React.FC = () => {
         console.error('Error loading admin data:', error);
         alert('Ошибка загрузки данных');
       } finally {
-        setLoading(false);
+      realAverageScore: 0,
+      avgScores: [{ study: 0, discipline: 0, events: 0 }],
       }
     };
 
