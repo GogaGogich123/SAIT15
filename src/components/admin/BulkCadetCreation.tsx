@@ -50,26 +50,44 @@ const BulkCadetCreation: React.FC = () => {
   const platoons = ['7-1', '7-2', '8-1', '8-2', '9-1', '9-2', '10-1', '10-2', '11-1', '11-2'];
   const squads = [1, 2, 3];
 
+  // Функция для транслитерации кириллицы в латиницу
+  const transliterate = (text: string): string => {
+    const transliterationMap: { [key: string]: string } = {
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+      'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+      'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+      'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+      'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+      'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
+      'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+      'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+      'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch',
+      'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya'
+    };
+
+    return text.split('').map(char => transliterationMap[char] || char).join('');
+  };
+
   // Функция для генерации email из имени
   const generateEmail = (name: string): string => {
     const nameParts = name.trim().split(' ');
     if (nameParts.length >= 2) {
-      const lastName = nameParts[0].toLowerCase();
-      const firstName = nameParts[1].toLowerCase();
+      const lastName = transliterate(nameParts[0]).toLowerCase();
+      const firstName = transliterate(nameParts[1]).toLowerCase();
       return `${lastName}.${firstName}@nkkk.ru`;
     }
-    return `${name.toLowerCase().replace(/\s+/g, '.')}@nkkk.ru`;
+    return `${transliterate(name).toLowerCase().replace(/\s+/g, '.')}@nkkk.ru`;
   };
 
   // Функция для генерации пароля из имени
   const generatePassword = (name: string): string => {
     const nameParts = name.trim().split(' ');
     if (nameParts.length >= 2) {
-      const lastName = nameParts[0].toLowerCase();
-      const firstName = nameParts[1].toLowerCase();
+      const lastName = transliterate(nameParts[0]).toLowerCase();
+      const firstName = transliterate(nameParts[1]).toLowerCase();
       return `${lastName}${firstName}123PK`;
     }
-    return `${name.toLowerCase().replace(/\s+/g, '')}123PK`;
+    return `${transliterate(name).toLowerCase().replace(/\s+/g, '')}123PK`;
   };
 
   // Обработка загрузки Excel файла
