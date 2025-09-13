@@ -3,8 +3,8 @@ import { Plus, Edit, Trash2, Users, Award } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
-import { PrefixModal } from './modals/PrefixModal';
-import { AssignPrefixModal } from './modals/AssignPrefixModal';
+import PrefixModal from './modals/PrefixModal';
+import AssignPrefixModal from './modals/AssignPrefixModal';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../hooks/useToast';
 
