@@ -167,38 +167,13 @@ const AssignPrefixModal: React.FC<AssignPrefixModalProps> = ({
             >
               <h3 className="text-xl font-bold text-white mb-4">Предварительный просмотр</h3>
               <div className="glass-effect p-6 rounded-xl">
-                <div className="space-y-4">
-                  {/* Текущие префиксы + новый */}
-                  <div className="flex flex-wrap gap-2">
-                    {assignedPrefixes.map(ap => {
-                      const prefix = ap.prefix;
-                      if (!prefix) return null;
-                      return (
-                        <div
-                          key={ap.id}
-                          className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r ${prefix.color} text-white text-sm font-bold shadow-lg border border-white/20`}
-                        >
-                          <Crown className="h-3 w-3" />
-                          <span>{prefix.display_name}</span>
-                        </div>
-                      );
-                    })}
-                    {/* Новый префикс */}
-                    {selectedPrefixId && (
-                      <div
-                        className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-gradient-to-r ${availablePrefixes.find(p => p.id === selectedPrefixId)?.color} text-white text-sm font-bold shadow-lg border border-white/20 animate-pulse`}
-                      >
-                        <Crown className="h-3 w-3" />
-                        <span>{availablePrefixes.find(p => p.id === selectedPrefixId)?.display_name}</span>
-                        <span className="text-xs bg-white/20 px-1 rounded">НОВЫЙ</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Имя кадета */}
-                  <div className="text-2xl font-bold text-white">
-                    {cadet.name}
-                  </div>
+                <div className="text-2xl font-bold text-white">
+                  {/* Показываем все префиксы + новый */}
+                  {assignedPrefixes.map(ap => ap.prefix?.display_name).join(' ')}{assignedPrefixes.length > 0 ? ' ' : ''}
+                  <span className={`bg-gradient-to-r ${availablePrefixes.find(p => p.id === selectedPrefixId)?.color} bg-clip-text text-transparent`}>
+                    {availablePrefixes.find(p => p.id === selectedPrefixId)?.display_name}
+                  </span>
+                  {' '}{cadet.name}
                 </div>
                 <p className="text-blue-300 mt-2">{cadet.platoon} взвод, {cadet.squad} отделение</p>
               </div>

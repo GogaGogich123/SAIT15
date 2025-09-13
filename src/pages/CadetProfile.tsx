@@ -243,29 +243,10 @@ const CadetProfile: React.FC = () => {
             </motion.div>
 
             <div className="flex-grow">
-              {/* Префиксы кадета */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-4"
-              >
-                {/* Здесь будут отображаться префиксы когда они будут загружены */}
-                <div className="flex flex-wrap gap-2">
-                  {/* Пример префиксов для демонстрации */}
-                  {cadet.display_name && cadet.display_name !== cadet.name && (
-                    <div className="inline-flex items-center space-x-1 px-4 py-2 rounded-full bg-gradient-to-r from-red-600 to-red-800 text-white text-sm font-bold shadow-lg border border-white/20 relative overflow-hidden group">
-                      <Crown className="h-4 w-4" />
-                      <span>Атаман</span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-              
               <motion.h1
                 className="text-5xl font-display font-black text-white mb-4 text-shadow text-glow"
               >
-                {cadet.name}
+                {cadet.display_name || cadet.name}
               </motion.h1>
               <motion.p
                 className="text-blue-200 text-2xl mb-6 font-semibold"
