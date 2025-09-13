@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Users, Award } from 'lucide-react';
-import { Button } from '../ui/Button';
+import Button from '../ui/Button';
 import { Card } from '../ui/Card';
 import Badge from '../ui/Badge';
 import PrefixModal from './modals/PrefixModal';
