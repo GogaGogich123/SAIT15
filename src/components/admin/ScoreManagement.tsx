@@ -9,6 +9,7 @@ import {
   Users, 
   Target,
   TrendingUp,
+  TrendingDown,
   Calendar,
   Star,
   Trophy,
