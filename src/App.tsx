@@ -27,10 +27,6 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/rating" element={<RatingPage />} />
             <Route path="/cadet/:id" element={<CadetProfile />} />
-            <Route path="/forum" element={<ForumPage />} />
-            <Route path="/forum/topic/:id" element={<ForumTopicPage />} />
-            <Route path="/forum/create-topic" element={<CreateTopicPage />} />
-            <Route path="/council" element={<CouncilPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/tasks" element={<TasksPage />} />
