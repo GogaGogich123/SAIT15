@@ -31,6 +31,7 @@ import ScoreModal from '../components/admin/modals/ScoreModal';
 import AdminResetMenu from '../components/admin/AdminResetMenu';
 import AwardAchievementModal from '../components/admin/modals/AwardAchievementModal';
 import BulkCadetCreation from '../components/admin/BulkCadetCreation';
+import NewsModal from '../components/admin/modals/NewsModal';
 import { 
   getCadets, 
   getAchievements, 
@@ -51,6 +52,11 @@ import {
   deleteAchievement,
   awardAchievement
 } from '../lib/admin-achievements';
+import {
+  createNews as createNewsAdmin,
+  updateNewsAdmin,
+  deleteNewsAdmin
+} from '../lib/admin-news';
 import { 
   getEvents,
   createEvent,
@@ -435,13 +441,13 @@ const AdminPage: React.FC = () => {
   const handleSubmitNews = async () => {
     try {
       if (newsModal.isEditing && newsModal.newsItem) {
-        await updateNews(newsModal.newsItem.id, newsForm);
+        await updateNewsAdmin(newsModal.newsItem.id, newsForm);
         setNews(news.map(n => 
           n.id === newsModal.newsItem!.id ? { ...n, ...newsForm } : n
         ));
         alert('Новость обновлена');
       } else {
-        const newNews = await addNews(newsForm);
+        const newNews = await createNewsAdmin(newsForm);
         setNews([newNews, ...news]);
         alert('Новость создана');
       }
@@ -456,7 +462,7 @@ const AdminPage: React.FC = () => {
     if (!confirm('Вы уверены, что хотите удалить эту новость?')) return;
     
     try {
-      await deleteNews(id);
+      await deleteNewsAdmin(id);
       setNews(news.filter(n => n.id !== id));
       alert('Новость удалена');
     } catch (error) {
@@ -859,11 +865,29 @@ const AdminPage: React.FC = () => {
           />
 
           <AwardAchievementModal
+            isOpen={newsModal.isOpen}
+            onClose={() => setNewsModal({ isOpen: false, isEditing: false, newsItem: null })}
+            onSubmit={handleSubmitNews}
+            form={newsForm}
+            setForm={setNewsForm}
+            isEditing={newsModal.isEditing}
+          />
+
+          <AwardAchievementModal
             isOpen={awardAchievementModal.isOpen}
             onClose={() => setAwardAchievementModal({ isOpen: false })}
             onSubmit={handleSubmitAwardAchievement}
             cadets={cadets}
             achievements={achievements}
+          />
+
+          <NewsModal
+            isOpen={newsModal.isOpen}
+            onClose={() => setNewsModal({ isOpen: false, isEditing: false, newsItem: null })}
+            onSubmit={handleSubmitNews}
+            form={newsForm}
+            setForm={setNewsForm}
+            isEditing={newsModal.isEditing}
           />
         </div>
       </div>
